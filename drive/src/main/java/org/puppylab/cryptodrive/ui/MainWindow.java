@@ -106,8 +106,10 @@ public class MainWindow {
             trayItem.addListener(SWT.MenuDetect, _ -> trayMenu.setVisible(true));
 
             shell.addListener(SWT.Close, e -> {
-                e.doit = false;
-                shell.setVisible(false);
+                if (MainController.instance.getAppSettings().keepTrayIcon) {
+                    e.doit = false;
+                    shell.setVisible(false);
+                }
             });
         }
 

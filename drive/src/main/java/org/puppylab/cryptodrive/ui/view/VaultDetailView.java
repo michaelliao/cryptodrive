@@ -36,9 +36,11 @@ public class VaultDetailView {
     private final Button    secondaryButton;
     private final Font      nameFont;
     private final Font      bigFont;
+    private final MainController controller;
     private Vault           current;
 
     public VaultDetailView(Composite parent, MainController controller) {
+        this.controller = controller;
         Display display = parent.getDisplay();
 
         this.root = new Composite(parent, SWT.NONE);
@@ -177,6 +179,7 @@ public class VaultDetailView {
         if (current.isLocked()) {
             // TODO: prompt password and unlock
             current.setLocked(false);
+            controller.notifySelectedChanged();
         } else {
             // TODO: open mount point in OS file explorer
         }
@@ -191,6 +194,7 @@ public class VaultDetailView {
         } else {
             // TODO: unmount + zeroize DEK
             current.setLocked(true);
+            controller.notifySelectedChanged();
         }
         update(current);
     }

@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 public class MainController {
 
     // singleton instance of MainController:
-    private static MainController instance = null;
+    public static MainController instance = null;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -108,6 +108,40 @@ public class MainController {
 
     private void fireVaultsChanged() {
         vaultsChangedListeners.forEach(Runnable::run);
+    }
+
+    /**
+     * Re-publish the current selection to listeners (used after a vault's mutable
+     * state — e.g. locked/unlocked — changes but the selection did not).
+     */
+    public void notifySelectedChanged() {
+        selectionListeners.forEach(l -> l.accept(selected));
+    }
+
+    /**
+     * Remove a vault from the managed list and persist {@code settings.json}. Files
+     * under the vault directory are <strong>not</strong> deleted.
+     */
+    public String removeVault(Vault vault) {
+        if (vault == null)
+            return "No vault selected.";
+        if (!vault.isLocked())
+            return "Vault must be locked before removal.";
+        String key = vault.getPath().toAbsolutePath().normalize().toString();
+        if (vaults.remove(key) == null)
+            return "Vault not managed.";
+        appSettings.vaults.removeIf(p -> Path.of(p).toAbsolutePath().normalize().toString().equals(key));
+        try {
+            FileUtils.writeString(appSettingsPath, JsonUtils.toJson(appSettings));
+        } catch (RuntimeException e) {
+            logger.error("failed to persist settings after remove", e);
+        }
+        if (this.selected == vault) {
+            this.selected = null;
+            selectionListeners.forEach(l -> l.accept(null));
+        }
+        fireVaultsChanged();
+        return null;
     }
 
     /**
