@@ -10,13 +10,16 @@ import java.util.function.Consumer;
 
 import javax.crypto.SecretKey;
 
+import org.cryptomator.jfuse.api.Fuse;
 import org.puppylab.cryptodrive.core.AppSettings;
 import org.puppylab.cryptodrive.core.Vault;
 import org.puppylab.cryptodrive.core.VaultConfig;
+import org.puppylab.cryptodrive.core.fs.MirrorFileSystem;
 import org.puppylab.cryptodrive.util.Base64Utils;
 import org.puppylab.cryptodrive.util.EncryptUtils;
 import org.puppylab.cryptodrive.util.FileUtils;
 import org.puppylab.cryptodrive.util.JsonUtils;
+import org.puppylab.cryptodrive.util.MountUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +39,7 @@ public class MainController {
     private final Path                  appSettingsPath;
     private final AppSettings           appSettings;
     private final Map<String, Vault>    vaults                 = new HashMap<>();
+    private final Map<String, Fuse>     mounts                 = new HashMap<>();
     private final List<Consumer<Vault>> selectionListeners     = new ArrayList<>();
     private final List<Runnable>        vaultsChangedListeners = new ArrayList<>();
     private Vault                       selected;
@@ -258,11 +262,62 @@ public class MainController {
                 return "Incorrect password.";
             }
             vault.unlock(EncryptUtils.bytesToAesKey(dek));
+            String mountErr = mountVault(vault);
+            if (mountErr != null) {
+                vault.setLocked();
+                return mountErr;
+            }
             notifySelectedChanged();
             return null;
         } catch (RuntimeException e) {
             logger.error("unlockVault failed", e);
             return "Failed to unlock vault: " + e.getMessage();
+        }
+    }
+
+    /**
+     * Lock {@code vault}: unmount the FUSE drive if mounted and zeroize the DEK.
+     * Returns {@code null} on success or a user-facing error message.
+     */
+    public String lockVault(Vault vault) {
+        if (vault == null)
+            return "No vault selected.";
+        Fuse fuse = mounts.remove(vaultKey(vault));
+        if (fuse != null) {
+            try {
+                fuse.close();
+            } catch (Exception e) {
+                logger.warn("failed to unmount {}", vault.getPath(), e);
+            }
+        }
+        vault.setLocked();
+        notifySelectedChanged();
+        return null;
+    }
+
+    private static String vaultKey(Vault vault) {
+        return vault.getPath().toAbsolutePath().normalize().toString();
+    }
+
+    private String mountVault(Vault vault) {
+        List<String> free = MountUtils.listAvailableDriveLetters();
+        if (free.isEmpty()) {
+            return "No available drive letter to mount.";
+        }
+        String letter = free.getFirst();
+        try {
+            Path dataDir = vault.getPath().resolve("data");
+            if (!Files.isDirectory(dataDir)) {
+                Files.createDirectories(dataDir);
+            }
+            MirrorFileSystem fs = new MirrorFileSystem(dataDir, Fuse.builder().errno());
+            Fuse fuse = MountUtils.mount(letter, fs, vault.getName());
+            mounts.put(vaultKey(vault), fuse);
+            logger.info("mounted vault '{}' at {}", vault.getName(), letter);
+            return null;
+        } catch (Exception e) {
+            logger.error("mount failed for {}", vault.getPath(), e);
+            return "Failed to mount at " + letter + ": " + e.getMessage();
         }
     }
 

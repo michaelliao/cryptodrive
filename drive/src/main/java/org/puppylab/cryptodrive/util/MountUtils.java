@@ -2,10 +2,17 @@ package org.puppylab.cryptodrive.util;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.foreign.Arena;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
+import java.lang.foreign.SymbolLookup;
+import java.lang.foreign.ValueLayout;
+import java.lang.invoke.MethodHandle;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.cryptomator.jfuse.api.Fuse;
@@ -67,6 +74,38 @@ public class MountUtils {
             } catch (Exception ignored) {
             }
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * List drive letters that are not currently in use on Windows. Returns letters
+     * in the range {@code D..Z} (A/B/C are conventionally reserved). On non-Windows
+     * platforms returns an empty list.
+     */
+    public static List<String> listAvailableDriveLetters() {
+        if (!IS_WINDOWS) {
+            return List.of();
+        }
+        int mask = getLogicalDrivesBitmask();
+        var out = new ArrayList<String>(23);
+        for (int i = 3; i < 26; i++) { // skip A(0), B(1), C(2)
+            if ((mask & (1 << i)) == 0) {
+                out.add(((char) ('A' + i)) + ":");
+            }
+        }
+        return out;
+    }
+
+    private static int getLogicalDrivesBitmask() {
+        try {
+            Linker linker = Linker.nativeLinker();
+            @SuppressWarnings("resource")
+            SymbolLookup kernel32 = SymbolLookup.libraryLookup("kernel32", Arena.ofAuto());
+            MethodHandle getLogicalDrives = linker.downcallHandle(kernel32.find("GetLogicalDrives").orElseThrow(),
+                    FunctionDescriptor.of(ValueLayout.JAVA_INT));
+            return (int) getLogicalDrives.invoke();
+        } catch (Throwable t) {
+            throw new RuntimeException("GetLogicalDrives failed", t);
         }
     }
 

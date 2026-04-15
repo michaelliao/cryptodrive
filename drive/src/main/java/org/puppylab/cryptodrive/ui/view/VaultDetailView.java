@@ -192,9 +192,7 @@ public class VaultDetailView {
         if (current.isLocked()) {
             // TODO: open vault options dialog
         } else {
-            // TODO: unmount + zeroize DEK
-            current.setLocked();
-            controller.notifySelectedChanged();
+            controller.lockVault(current);
         }
         update(current);
     }
