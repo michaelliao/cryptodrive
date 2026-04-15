@@ -1,0 +1,186 @@
+package org.puppylab.cryptodrive.ui.controller;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+
+import javax.crypto.SecretKey;
+
+import org.puppylab.cryptodrive.core.AppSettings;
+import org.puppylab.cryptodrive.core.Vault;
+import org.puppylab.cryptodrive.core.VaultConfig;
+import org.puppylab.cryptodrive.util.Base64Utils;
+import org.puppylab.cryptodrive.util.EncryptUtils;
+import org.puppylab.cryptodrive.util.FileUtils;
+import org.puppylab.cryptodrive.util.JsonUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Holds the vault list + current selection and exposes listener hooks for the
+ * views. Views read state and register callbacks; the controller re-publishes
+ * changes so list/detail views stay in sync.
+ */
+public class MainController {
+
+    // singleton instance of MainController:
+    private static MainController instance = null;
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    private final Path                  appPath;
+    private final Path                  appSettingsPath;
+    private final AppSettings           appSettings;
+    private final Map<String, Vault>    vaults                 = new HashMap<>();
+    private final List<Consumer<Vault>> selectionListeners     = new ArrayList<>();
+    private final List<Runnable>        vaultsChangedListeners = new ArrayList<>();
+    private Vault                       selected;
+
+    private MainController() {
+        this.appPath = FileUtils.getAppDataDir();
+        this.appSettingsPath = this.appPath.resolve("settings.json");
+        // load AppSettings:
+        if (Files.isRegularFile(this.appSettingsPath)) {
+            this.appSettings = JsonUtils.fromJson(FileUtils.readString(this.appSettingsPath), AppSettings.class);
+        } else {
+            this.appSettings = new AppSettings();
+        }
+        for (String strPath : this.appSettings.vaults) {
+            Path path = Path.of(strPath).toAbsolutePath().normalize();
+            if (this.vaults.containsKey(path.toString())) {
+                logger.warn("ignore duplicate vault path: {}", path);
+            } else {
+                logger.info("load vault from path: {}", path);
+                Vault vault = loadVault(path);
+                if (vault != null) {
+                    this.vaults.put(path.toString(), vault);
+                }
+            }
+        }
+    }
+
+    public AppSettings getAppSettings() {
+        return this.appSettings;
+    }
+
+    public static MainController init() {
+        instance = new MainController();
+        return instance;
+    }
+
+    private Vault loadVault(Path path) {
+        Path vaultConfigPath = path.resolve("vault.json");
+        if (!Files.isRegularFile(vaultConfigPath)) {
+            logger.error("invalid vault: config not found: {}", vaultConfigPath);
+            return null;
+        }
+        VaultConfig config = JsonUtils.fromJson(FileUtils.readString(vaultConfigPath), VaultConfig.class);
+        Vault vault = new Vault(path, config);
+        return vault;
+    }
+
+    public List<Vault> getVaults() {
+        return List.of(vaults.values().toArray(Vault[]::new));
+    }
+
+    public Vault getSelected() {
+        return selected;
+    }
+
+    public void select(Vault vault) {
+        if (this.selected == vault)
+            return;
+        this.selected = vault;
+        selectionListeners.forEach(l -> l.accept(vault));
+    }
+
+    public void addSelectionListener(Consumer<Vault> listener) {
+        selectionListeners.add(listener);
+    }
+
+    public void addVaultsChangedListener(Runnable listener) {
+        vaultsChangedListeners.add(listener);
+    }
+
+    private void fireVaultsChanged() {
+        vaultsChangedListeners.forEach(Runnable::run);
+    }
+
+    /**
+     * Create a new vault at {@code path} unlocked with {@code password}. Returns
+     * {@code null} on success or a user-facing error message.
+     */
+    public String createVault(Path path, char[] password) {
+        try {
+            Path abs = path.toAbsolutePath().normalize();
+            if (!Files.isDirectory(abs)) {
+                return "Folder does not exist: " + FileUtils.prettyPath(abs);
+            }
+            Path vaultConfigPath = abs.resolve("vault.json");
+            if (Files.exists(vaultConfigPath)) {
+                return "A vault already exists in this folder.";
+            }
+            if (vaults.containsKey(abs.toString())) {
+                return "Vault already managed: " + abs;
+            }
+
+            VaultConfig config = initVaultConfig(abs, password);
+            FileUtils.writeString(vaultConfigPath, JsonUtils.toJson(config));
+
+            Vault vault = new Vault(abs, config);
+            vaults.put(abs.toString(), vault);
+            appSettings.vaults.add(abs.toString());
+            FileUtils.writeString(appSettingsPath, JsonUtils.toJson(appSettings));
+
+            fireVaultsChanged();
+            select(vault);
+            return null;
+        } catch (RuntimeException e) {
+            logger.error("createVault failed", e);
+            return "Failed to create vault: " + e.getMessage();
+        }
+    }
+
+    private VaultConfig initVaultConfig(Path path, char[] password) {
+        VaultConfig config = new VaultConfig();
+        config.volume = path.getFileName().toString();
+        config.encryption = new VaultConfig.EncryptionConfig();
+        config.encryption.pbeAlg = EncryptUtils.PBE_ALG;
+        config.encryption.pbeIterations = 1_000_000;
+        config.encryption.aesAlg = EncryptUtils.AES_ALG;
+
+        byte[] salt = EncryptUtils.generateSalt();
+        config.encryption.pbeSaltB64 = Base64Utils.b64(salt);
+
+        byte[] dek = EncryptUtils.generateKey();
+        byte[] wrapKey = EncryptUtils.derivePbeKey(password, salt, config.encryption.pbeIterations);
+        SecretKey kek = EncryptUtils.bytesToAesKey(wrapKey);
+        byte[] wrappedDek = EncryptUtils.encrypt(dek, kek);
+        config.encryption.encryptedDekB64 = Base64Utils.b64(wrappedDek);
+
+        config.recoveryConfigs = new ArrayList<>();
+        return config;
+    }
+
+    // ── toolbar actions ──────────────────────────────────────────────────────
+
+    public void onNewVault() {
+        logger.info("onNewVault: dialog opens from the view");
+    }
+
+    public void onImportVault() {
+        logger.info("onImportVault: TODO pick existing vault dir");
+    }
+
+    public void onSettings() {
+        logger.info("onSettings: TODO open settings dialog");
+    }
+
+    public void onHelp() {
+        logger.info("onHelp: TODO open help / about");
+    }
+}
