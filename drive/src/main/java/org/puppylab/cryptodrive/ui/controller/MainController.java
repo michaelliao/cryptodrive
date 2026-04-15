@@ -200,6 +200,40 @@ public class MainController {
         return config;
     }
 
+    /**
+     * Import an existing vault at {@code path} into the managed list. Returns
+     * {@code null} on success or a user-facing error message.
+     */
+    public String importVault(Path path) {
+        try {
+            Path abs = path.toAbsolutePath().normalize();
+            if (!Files.isDirectory(abs)) {
+                return "Folder does not exist: " + FileUtils.prettyPath(abs);
+            }
+            Path vaultConfigPath = abs.resolve("vault.json");
+            if (!Files.isRegularFile(vaultConfigPath)) {
+                return "Not a vault folder (vault.json not found).";
+            }
+            if (vaults.containsKey(abs.toString())) {
+                return "Vault already managed: " + abs;
+            }
+            Vault vault = loadVault(abs);
+            if (vault == null) {
+                return "Failed to load vault from: " + FileUtils.prettyPath(abs);
+            }
+            vaults.put(abs.toString(), vault);
+            appSettings.vaults.add(abs.toString());
+            FileUtils.writeString(appSettingsPath, JsonUtils.toJson(appSettings));
+
+            fireVaultsChanged();
+            select(vault);
+            return null;
+        } catch (RuntimeException e) {
+            logger.error("importVault failed", e);
+            return "Failed to import vault: " + e.getMessage();
+        }
+    }
+
     // ── toolbar actions ──────────────────────────────────────────────────────
 
     public void onNewVault() {

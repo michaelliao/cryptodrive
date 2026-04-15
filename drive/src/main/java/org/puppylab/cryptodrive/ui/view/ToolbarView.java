@@ -11,6 +11,7 @@ import org.eclipse.swt.widgets.ToolItem;
 import org.puppylab.cryptodrive.core.Vault;
 import org.puppylab.cryptodrive.ui.Icons;
 import org.puppylab.cryptodrive.ui.controller.MainController;
+import org.puppylab.cryptodrive.ui.view.dialog.ImportVaultDialog;
 import org.puppylab.cryptodrive.ui.view.dialog.NewVaultDialog;
 
 /**
@@ -38,7 +39,7 @@ public class ToolbarView {
         toolbar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
         addItem("New Vault", "add", _ -> openNewVaultDialog(controller));
-        addItem("Import Vault", "import", _ -> controller.onImportVault());
+        addItem("Import Vault", "import", _ -> openImportVaultDialog(controller));
         ToolItem removeBtn = addItem("Remove Vault", "remove", _ -> onRemoveVault(controller));
         removeBtn.setEnabled(false);
         controller.addSelectionListener(v -> removeBtn.setEnabled(v != null && v.isLocked()));
@@ -77,6 +78,11 @@ public class ToolbarView {
     private void openNewVaultDialog(MainController controller) {
         NewVaultDialog dialog = new NewVaultDialog(container.getShell());
         dialog.open(controller::createVault);
+    }
+
+    private void openImportVaultDialog(MainController controller) {
+        ImportVaultDialog dialog = new ImportVaultDialog(container.getShell());
+        dialog.open(controller::importVault);
     }
 
     public Control getControl() {
