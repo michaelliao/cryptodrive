@@ -234,6 +234,38 @@ public class MainController {
         }
     }
 
+    /**
+     * Unlock {@code vault} by deriving the KEK from {@code password} and
+     * unwrapping the DEK. Returns {@code null} on success or a user-facing
+     * error message (e.g. wrong password).
+     */
+    public String unlockVault(Vault vault, char[] password) {
+        if (vault == null)
+            return "No vault selected.";
+        if (!vault.isLocked())
+            return null;
+        try {
+            VaultConfig.EncryptionConfig enc = vault.getConfig().encryption;
+            byte[] salt = Base64Utils.b64(enc.pbeSaltB64);
+            byte[] wrappedDek = Base64Utils.b64(enc.encryptedDekB64);
+            byte[] kekBytes = EncryptUtils.derivePbeKey(password, salt, enc.pbeIterations);
+            SecretKey kek = EncryptUtils.bytesToAesKey(kekBytes);
+            byte[] dek;
+            try {
+                dek = EncryptUtils.decrypt(wrappedDek, kek);
+            } catch (RuntimeException e) {
+                logger.info("unlockVault: decryption failed for {}", vault.getPath());
+                return "Incorrect password.";
+            }
+            vault.unlock(EncryptUtils.bytesToAesKey(dek));
+            notifySelectedChanged();
+            return null;
+        } catch (RuntimeException e) {
+            logger.error("unlockVault failed", e);
+            return "Failed to unlock vault: " + e.getMessage();
+        }
+    }
+
     // ── toolbar actions ──────────────────────────────────────────────────────
 
     public void onNewVault() {

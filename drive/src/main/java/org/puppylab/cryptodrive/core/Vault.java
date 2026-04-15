@@ -2,6 +2,8 @@ package org.puppylab.cryptodrive.core;
 
 import java.nio.file.Path;
 
+import javax.crypto.SecretKey;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +13,9 @@ public class Vault {
 
     final Path        path;
     final VaultConfig config;
-    boolean           locked = true;
+
+    // Keep secret key if vault unlocked:
+    SecretKey secretKey = null;
 
     public Vault(Path path, VaultConfig config) {
         this.path = path;
@@ -19,11 +23,15 @@ public class Vault {
     }
 
     public boolean isLocked() {
-        return locked;
+        return secretKey == null;
     }
 
-    public void setLocked(boolean locked) {
-        this.locked = locked;
+    public void setLocked() {
+        this.secretKey = null;
+    }
+
+    public void unlock(SecretKey key) {
+        this.secretKey = key;
     }
 
     public String getName() {
@@ -32,6 +40,10 @@ public class Vault {
 
     public Path getPath() {
         return this.path;
+    }
+
+    public VaultConfig getConfig() {
+        return this.config;
     }
 
 }

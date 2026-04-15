@@ -63,6 +63,10 @@ public class VaultListView {
         table.addListener(SWT.Dispose, _ -> nameFont.dispose());
 
         controller.addVaultsChangedListener(this::refresh);
+        controller.addSelectionListener(_ -> {
+            if (!table.isDisposed())
+                table.redraw();
+        });
         refresh();
     }
 

@@ -15,6 +15,7 @@ import org.eclipse.swt.widgets.Label;
 import org.puppylab.cryptodrive.core.Vault;
 import org.puppylab.cryptodrive.ui.Icons;
 import org.puppylab.cryptodrive.ui.controller.MainController;
+import org.puppylab.cryptodrive.ui.view.dialog.UnlockVaultDialog;
 import org.puppylab.cryptodrive.util.FileUtils;
 
 /**
@@ -28,16 +29,16 @@ public class VaultDetailView {
 
     private static final int ICON_SIZE = 32;
 
-    private final Composite root;
-    private final Canvas    stateIcon;
-    private final Label     nameLabel;
-    private final Label     pathLabel;
-    private final Button    primaryButton;
-    private final Button    secondaryButton;
-    private final Font      nameFont;
-    private final Font      bigFont;
+    private final Composite      root;
+    private final Canvas         stateIcon;
+    private final Label          nameLabel;
+    private final Label          pathLabel;
+    private final Button         primaryButton;
+    private final Button         secondaryButton;
+    private final Font           nameFont;
+    private final Font           bigFont;
     private final MainController controller;
-    private Vault           current;
+    private Vault                current;
 
     public VaultDetailView(Composite parent, MainController controller) {
         this.controller = controller;
@@ -177,9 +178,8 @@ public class VaultDetailView {
         if (current == null)
             return;
         if (current.isLocked()) {
-            // TODO: prompt password and unlock
-            current.setLocked(false);
-            controller.notifySelectedChanged();
+            UnlockVaultDialog dialog = new UnlockVaultDialog(root.getShell(), current.getName());
+            dialog.open(pw -> controller.unlockVault(current, pw));
         } else {
             // TODO: open mount point in OS file explorer
         }
@@ -193,7 +193,7 @@ public class VaultDetailView {
             // TODO: open vault options dialog
         } else {
             // TODO: unmount + zeroize DEK
-            current.setLocked(true);
+            current.setLocked();
             controller.notifySelectedChanged();
         }
         update(current);
