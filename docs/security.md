@@ -11,8 +11,8 @@ CryptoDrive is designed to protect the confidentiality and integrity of your
 files **at rest** — on your local disk, on a lost laptop, or when synced to an
 untrusted cloud provider. Specifically:
 
-- **Protected:** an attacker who obtains the vault directory (ciphertext blobs
-  + `vault.json` + `files.json`) cannot read your file contents, cannot read
+- **Protected:** an attacker who obtains the vault directory (ciphertext 
+  blobs + `vault.json` + `files.json`) cannot read your file contents, cannot read
   your file or directory names, and cannot silently modify a file without
   detection.
 - **Not protected:** an attacker with code execution on your machine *while a
