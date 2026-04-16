@@ -17,7 +17,7 @@ public class CryptoFile extends CryptoNode {
     }
 
     /**
-     * get physical file path.
+     * get physical file relative path like "01/a2/3d.c9e".
      */
     public String getPhysicalFilePath() {
         int n = this.inode;
@@ -26,8 +26,8 @@ public class CryptoFile extends CryptoNode {
         int i2 = n & 0xff;
         n = n >>> 8;
         int i1 = n & 0xff;
-        String sep = File.pathSeparator;
-        return String.format("%s%02x%s%02x%s%02x.c9e", sep, i1, sep, i2, sep, i3);
+        String sep = File.separator;
+        return String.format("%02x%s%02x%s%02x.c9e", i1, sep, i2, sep, i3);
     }
 
     @Override
