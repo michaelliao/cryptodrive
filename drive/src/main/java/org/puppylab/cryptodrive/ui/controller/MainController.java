@@ -341,7 +341,16 @@ public class MainController {
         if (free.isEmpty()) {
             return "No available drive letter to mount.";
         }
-        String letter = free.getFirst();
+        String configured = vault.getConfig().mount;
+        String letter;
+        if (configured != null && !configured.isBlank()) {
+            if (!free.contains(configured)) {
+                return "Drive letter " + configured + " is already in use.";
+            }
+            letter = configured;
+        } else {
+            letter = free.getFirst();
+        }
         try {
             CryptoFs cryptoFs = new CryptoFs(vault.getSecretKey(), vault.getPath());
             CryptoFileSystem fs = new CryptoFileSystem(cryptoFs, Fuse.builder().errno());
