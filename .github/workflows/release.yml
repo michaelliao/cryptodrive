@@ -1,0 +1,56 @@
+name: Release CryptoDrive
+
+on:
+  push:
+    tags: ["*"]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: CryptoDrive-windows
+          - os: macos-latest
+            artifact: CryptoDrive-macos-arm64
+          - os: macos-26-intel
+            artifact: CryptoDrive-macos-x64
+          - os: ubuntu-latest
+            artifact: CryptoDrive-linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: maven
+      - run: mvn -B clean package
+        working-directory: desktop
+      - name: Zip app-image (Unix)
+        if: runner.os != 'Windows'
+        run: cd desktop/target/dist && zip -r ../../../${{ matrix.artifact }}.zip */
+        shell: bash
+      - name: Zip app-image (Windows)
+        if: runner.os == 'Windows'
+        run: Compress-Archive -Path desktop/target/dist/* -DestinationPath ${{ matrix.artifact }}.zip
+        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: CryptoDrive ${{ github.ref_name }}
+          files: "*.zip"
