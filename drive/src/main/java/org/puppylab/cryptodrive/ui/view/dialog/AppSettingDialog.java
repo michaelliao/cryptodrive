@@ -1,5 +1,7 @@
 package org.puppylab.cryptodrive.ui.view.dialog;
 
+import static org.puppylab.cryptodrive.util.I18nUtils.i18n;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -34,13 +36,11 @@ import org.puppylab.cryptodrive.util.I18nUtils;
  */
 public class AppSettingDialog {
 
-    private static final String APP_NAME    = "Crypto Drive";
     private static final String APP_VERSION = "1.0";
     private static final String APP_WEBSITE = "https://cryptodrive.puppylab.org";
     private static final int    LOGO_SIZE   = 64;
 
-    private static final String[] LANG_LABELS = { "System default", "English", "Chinese", "Japanese" };
-    private static final String[] LANG_CODES  = { "", "en", "zh", "ja" };
+    private static final String[] LANG_CODES = { "", "en", "zh", "ja" };
 
     private final Shell          shell;
     private final MainController controller;
@@ -48,7 +48,7 @@ public class AppSettingDialog {
     public AppSettingDialog(Shell parent, MainController controller) {
         this.controller = controller;
         this.shell = new Shell(parent, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL | SWT.RESIZE);
-        shell.setText("Settings");
+        shell.setText(i18n("appSettings.title"));
         GridLayout layout = new GridLayout(1, false);
         layout.marginWidth = 12;
         layout.marginHeight = 12;
@@ -80,7 +80,7 @@ public class AppSettingDialog {
 
     private void buildGeneralTab(TabFolder tabs) {
         TabItem item = new TabItem(tabs, SWT.NONE);
-        item.setText("General");
+        item.setText(i18n("tab.general"));
 
         Composite body = new Composite(tabs, SWT.NONE);
         GridLayout gl = new GridLayout(2, false);
@@ -93,7 +93,7 @@ public class AppSettingDialog {
         AppSettings settings = controller.getAppSettings();
 
         Button tray = new Button(body, SWT.CHECK);
-        tray.setText("Keep Crypto Drive in the notification area");
+        tray.setText(i18n("appSettings.keepTrayIcon"));
         tray.setSelection(settings.keepTrayIcon);
         GridData trayData = new GridData(SWT.FILL, SWT.CENTER, true, false);
         trayData.horizontalSpan = 2;
@@ -104,11 +104,11 @@ public class AppSettingDialog {
         });
 
         Label lang = new Label(body, SWT.NONE);
-        lang.setText("Language:");
+        lang.setText(i18n("appSettings.language"));
         lang.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
 
         Combo langCombo = new Combo(body, SWT.READ_ONLY | SWT.DROP_DOWN);
-        langCombo.setItems(LANG_LABELS);
+        langCombo.setItems(languageLabels());
         langCombo.select(indexOfLanguage(settings.language));
         GridData ld = new GridData(SWT.FILL, SWT.CENTER, true, false);
         ld.widthHint = 200;
@@ -125,6 +125,15 @@ public class AppSettingDialog {
         item.setControl(body);
     }
 
+    private static String[] languageLabels() {
+        return new String[] {
+                i18n("lang.systemDefault"),
+                i18n("lang.en"),
+                i18n("lang.zh"),
+                i18n("lang.ja"),
+        };
+    }
+
     private static int indexOfLanguage(String code) {
         if (code == null)
             return 0;
@@ -139,7 +148,7 @@ public class AppSettingDialog {
 
     private void buildAboutTab(TabFolder tabs) {
         TabItem item = new TabItem(tabs, SWT.NONE);
-        item.setText("About");
+        item.setText(i18n("tab.about"));
 
         Composite body = new Composite(tabs, SWT.NONE);
         GridLayout gl = new GridLayout(2, false);
@@ -174,24 +183,24 @@ public class AppSettingDialog {
         titleBox.setLayout(tbLayout);
 
         Label name = new Label(titleBox, SWT.NONE);
-        name.setText(APP_NAME);
+        name.setText(i18n("app.name"));
         name.setFont(nameFont);
         name.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
         Label version = new Label(titleBox, SWT.NONE);
-        version.setText("Version " + APP_VERSION);
+        version.setText(i18n("about.version", APP_VERSION));
         version.setForeground(display.getSystemColor(SWT.COLOR_DARK_GRAY));
         version.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
         Link website = new Link(body, SWT.NONE);
-        website.setText("Website: <a href=\"" + APP_WEBSITE + "\">" + APP_WEBSITE + "</a>");
+        website.setText(i18n("about.website", APP_WEBSITE));
         GridData wd = new GridData(SWT.FILL, SWT.CENTER, true, false);
         wd.horizontalSpan = 2;
         website.setLayoutData(wd);
         website.addListener(SWT.Selection, e -> Program.launch(e.text));
 
         Label licHeader = new Label(body, SWT.NONE);
-        licHeader.setText("License:");
+        licHeader.setText(i18n("about.license"));
         GridData lhd = new GridData(SWT.LEFT, SWT.CENTER, false, false);
         lhd.horizontalSpan = 2;
         licHeader.setLayoutData(lhd);
@@ -210,11 +219,11 @@ public class AppSettingDialog {
     private static String loadLicenseText() {
         try (InputStream is = AppSettingDialog.class.getResourceAsStream("/LICENSE")) {
             if (is == null) {
-                return "LICENSE file not bundled.";
+                return i18n("about.licenseMissing");
             }
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            return "Failed to load LICENSE: " + e.getMessage();
+            return i18n("about.licenseFailed", e.getMessage());
         }
     }
 

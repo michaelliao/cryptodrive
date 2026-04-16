@@ -6,7 +6,7 @@ import java.util.List;
 public class AppSettings {
 
     // Keep Crypto Drive in the notification area:
-    public boolean keepTrayIcon;
+    public boolean keepTrayIcon = true;
 
     public String language = "";
 

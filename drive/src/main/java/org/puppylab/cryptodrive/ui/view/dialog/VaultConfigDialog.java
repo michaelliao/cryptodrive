@@ -1,5 +1,7 @@
 package org.puppylab.cryptodrive.ui.view.dialog;
 
+import static org.puppylab.cryptodrive.util.I18nUtils.i18n;
+
 import java.util.Arrays;
 
 import org.eclipse.swt.SWT;
@@ -21,17 +23,15 @@ import org.puppylab.cryptodrive.ui.controller.MainController;
 import org.puppylab.cryptodrive.util.MountUtils;
 
 /**
- * Modal per-vault configuration dialog with three tabs: General, Sync, Security.
- * All changes in General take effect immediately (no OK/Cancel); the Security
- * tab has its own {@code Change Password} action button.
+ * Modal per-vault configuration dialog with three tabs: General, Sync,
+ * Security. All changes in General take effect immediately (no OK/Cancel); the
+ * Security tab has its own {@code Change Password} action button.
  */
 public class VaultConfigDialog {
 
     private static final int MIN_PASSWORD_LEN = 8;
 
-    private static final int[]    AUTO_LOCK_MINUTES = { 5, 10, 15, 30, 60, 0 };
-    private static final String[] AUTO_LOCK_LABELS  = { "5 minutes", "10 minutes", "15 minutes", "30 minutes",
-            "60 minutes", "Never" };
+    private static final int[] AUTO_LOCK_MINUTES = { 5, 10, 15, 30, 60, 120, 0 };
 
     private final Shell          shell;
     private final Vault          vault;
@@ -41,7 +41,7 @@ public class VaultConfigDialog {
         this.vault = vault;
         this.controller = controller;
         this.shell = new Shell(parent, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
-        shell.setText("Vault Config — " + vault.getName());
+        shell.setText(i18n("vaultConfig.title", vault.getName()));
         GridLayout layout = new GridLayout(1, false);
         layout.marginWidth = 12;
         layout.marginHeight = 12;
@@ -64,7 +64,8 @@ public class VaultConfigDialog {
         shell.open();
         Display display = shell.getDisplay();
         while (!shell.isDisposed()) {
-            if (!display.readAndDispatch()) display.sleep();
+            if (!display.readAndDispatch())
+                display.sleep();
         }
     }
 
@@ -72,7 +73,7 @@ public class VaultConfigDialog {
 
     private void buildGeneralTab(TabFolder tabs) {
         TabItem item = new TabItem(tabs, SWT.NONE);
-        item.setText("General");
+        item.setText(i18n("tab.general"));
 
         Composite body = tabComposite(tabs);
         GridLayout gl = new GridLayout(3, false);
@@ -85,7 +86,7 @@ public class VaultConfigDialog {
         VaultConfig cfg = vault.getConfig();
 
         // Volume label
-        label(body, "Volume:");
+        label(body, i18n("vaultConfig.volume"));
         Text volumeField = new Text(body, SWT.BORDER);
         GridData vd = new GridData(SWT.FILL, SWT.CENTER, true, false);
         vd.horizontalSpan = 2;
@@ -101,9 +102,9 @@ public class VaultConfigDialog {
         });
 
         // Auto-lock
-        label(body, "Lock vault when idle for:");
+        label(body, i18n("vaultConfig.autoLock"));
         Combo autoLock = new Combo(body, SWT.READ_ONLY | SWT.DROP_DOWN);
-        autoLock.setItems(AUTO_LOCK_LABELS);
+        autoLock.setItems(autoLockLabels());
         int selIdx = indexOfAutoLock(cfg.autoLock);
         autoLock.select(selIdx);
         GridData ad = new GridData(SWT.FILL, SWT.CENTER, true, false);
@@ -111,17 +112,18 @@ public class VaultConfigDialog {
         autoLock.setLayoutData(ad);
         autoLock.addListener(SWT.Selection, _ -> {
             int i = autoLock.getSelectionIndex();
-            if (i < 0) return;
+            if (i < 0)
+                return;
             cfg.autoLock = AUTO_LOCK_MINUTES[i];
             controller.saveVaultConfig(vault);
         });
 
         // Mount point
-        label(body, "Mount point:");
+        label(body, i18n("vaultConfig.mountPoint"));
         if (MountUtils.IS_WINDOWS) {
             Combo mount = new Combo(body, SWT.READ_ONLY | SWT.DROP_DOWN);
             String[] choices = new String[1 + ('Z' - 'D' + 1)];
-            choices[0] = "Auto";
+            choices[0] = i18n("vaultConfig.auto");
             for (int i = 0; i < 'Z' - 'D' + 1; i++) {
                 choices[i + 1] = ((char) ('D' + i)) + ":";
             }
@@ -132,7 +134,8 @@ public class VaultConfigDialog {
             mount.setLayoutData(md);
             mount.addListener(SWT.Selection, _ -> {
                 int i = mount.getSelectionIndex();
-                if (i < 0) return;
+                if (i < 0)
+                    return;
                 cfg.mount = i == 0 ? "" : choices[i];
                 controller.saveVaultConfig(vault);
             });
@@ -149,10 +152,10 @@ public class VaultConfigDialog {
                 }
             });
             Button select = new Button(body, SWT.PUSH);
-            select.setText("Select");
+            select.setText(i18n("btn.select"));
             select.addListener(SWT.Selection, _ -> {
                 DirectoryDialog dd = new DirectoryDialog(shell, SWT.OPEN);
-                dd.setText("Choose mount directory");
+                dd.setText(i18n("vaultConfig.chooseMountDir"));
                 String chosen = dd.open();
                 if (chosen != null) {
                     mountField.setText(chosen);
@@ -165,17 +168,29 @@ public class VaultConfigDialog {
         item.setControl(body);
     }
 
+    private static String[] autoLockLabels() {
+        String[] labels = new String[AUTO_LOCK_MINUTES.length];
+        for (int i = 0; i < AUTO_LOCK_MINUTES.length; i++) {
+            int m = AUTO_LOCK_MINUTES[i];
+            labels[i] = m == 0 ? i18n("vaultConfig.never") : i18n("vaultConfig.minutes", m);
+        }
+        return labels;
+    }
+
     private static int indexOfAutoLock(int minutes) {
         for (int i = 0; i < AUTO_LOCK_MINUTES.length; i++) {
-            if (AUTO_LOCK_MINUTES[i] == minutes) return i;
+            if (AUTO_LOCK_MINUTES[i] == minutes)
+                return i;
         }
-        return AUTO_LOCK_LABELS.length - 1; // default "Never"
+        return AUTO_LOCK_MINUTES.length - 1; // default "Never" (last entry)
     }
 
     private static int indexOfMount(String mount, String[] choices) {
-        if (mount == null || mount.isBlank()) return 0;
+        if (mount == null || mount.isBlank())
+            return 0;
         for (int i = 1; i < choices.length; i++) {
-            if (choices[i].equalsIgnoreCase(mount)) return i;
+            if (choices[i].equalsIgnoreCase(mount))
+                return i;
         }
         return 0;
     }
@@ -184,7 +199,7 @@ public class VaultConfigDialog {
 
     private void buildSyncTab(TabFolder tabs) {
         TabItem item = new TabItem(tabs, SWT.NONE);
-        item.setText("Sync");
+        item.setText(i18n("tab.sync"));
 
         Composite body = tabComposite(tabs);
         GridLayout gl = new GridLayout(1, false);
@@ -193,7 +208,7 @@ public class VaultConfigDialog {
         body.setLayout(gl);
 
         Label placeholder = new Label(body, SWT.NONE);
-        placeholder.setText("Cloud sync settings (coming soon).");
+        placeholder.setText(i18n("vaultConfig.syncPlaceholder"));
         placeholder.setForeground(shell.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
         placeholder.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
@@ -204,7 +219,7 @@ public class VaultConfigDialog {
 
     private void buildSecurityTab(TabFolder tabs) {
         TabItem item = new TabItem(tabs, SWT.NONE);
-        item.setText("Security");
+        item.setText(i18n("tab.security"));
 
         Composite body = tabComposite(tabs);
         GridLayout gl = new GridLayout(2, false);
@@ -214,22 +229,22 @@ public class VaultConfigDialog {
         gl.verticalSpacing = 12;
         body.setLayout(gl);
 
-        label(body, "Old password:");
+        label(body, i18n("vaultConfig.oldPassword"));
         Text oldPw = new Text(body, SWT.BORDER | SWT.PASSWORD);
         oldPw.setLayoutData(fillWide());
 
-        label(body, "New password:");
+        label(body, i18n("vaultConfig.newPassword"));
         Text newPw = new Text(body, SWT.BORDER | SWT.PASSWORD);
         newPw.setLayoutData(fillWide());
 
-        label(body, "Confirm password:");
+        label(body, i18n("vaultConfig.confirmPassword"));
         Text confirmPw = new Text(body, SWT.BORDER | SWT.PASSWORD);
         confirmPw.setLayoutData(fillWide());
 
         // spacer for the label column so the button aligns under the fields
         new Label(body, SWT.NONE);
         Button change = new Button(body, SWT.PUSH);
-        change.setText("Change Password");
+        change.setText(i18n("btn.changePassword"));
         GridData cd = new GridData(SWT.LEFT, SWT.CENTER, false, false);
         cd.widthHint = 160;
         change.setLayoutData(cd);
@@ -247,15 +262,15 @@ public class VaultConfigDialog {
             char[] c = confirmPw.getText().toCharArray();
             try {
                 if (o.length == 0) {
-                    status.setText("Please enter the old password.");
+                    status.setText(i18n("vaultConfig.err.oldPasswordEmpty"));
                     return;
                 }
                 if (n.length < MIN_PASSWORD_LEN) {
-                    status.setText("New password must be at least " + MIN_PASSWORD_LEN + " characters.");
+                    status.setText(i18n("vaultConfig.err.newPasswordShort", MIN_PASSWORD_LEN));
                     return;
                 }
                 if (!Arrays.equals(n, c)) {
-                    status.setText("Passwords do not match.");
+                    status.setText(i18n("vaultConfig.err.passwordsMismatch"));
                     return;
                 }
                 String err = controller.changeVaultPassword(vault, o, n);
@@ -264,7 +279,7 @@ public class VaultConfigDialog {
                     return;
                 }
                 status.setForeground(shell.getDisplay().getSystemColor(SWT.COLOR_DARK_GREEN));
-                status.setText("Password changed.");
+                status.setText(i18n("vaultConfig.msg.passwordChanged"));
                 oldPw.setText("");
                 newPw.setText("");
                 confirmPw.setText("");
