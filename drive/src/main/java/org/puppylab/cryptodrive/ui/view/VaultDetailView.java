@@ -19,11 +19,21 @@ import org.puppylab.cryptodrive.ui.view.dialog.UnlockVaultDialog;
 import org.puppylab.cryptodrive.util.FileUtils;
 
 /**
- * Right-pane detail view: ┌────────────────────────────────────────┐ │ [🔒]
- * Name (bold 120%) │ │ path (dim) │ │ ───────────────────────────────────── │ │
- * │ │ ┌──────────────────┐ │ │ │ Unlock Vault │ (120% font) │
- * └──────────────────┘ │ │ [ Options ] │ (or [ Lock ] when unlocked) │ │
+ * Right-pane detail view:
+ * 
+ * <code>
+ * ┌────────────────────────────────────────┐
+ * │ ┌──┐ Name (bold 120%)                  │
+ * │ └──┘ path (dim)                        │
+ * │ ────────────────────────────────────── │
+ * │                                        │
+ * │       ┌──────────────────┐             │
+ * │       │   Unlock Vault   │ (120% font) │
+ * │       └──────────────────┘             │
+ * │           [ Options ]                  │
+ * │        (or [ Lock ] when unlocked)     │
  * └────────────────────────────────────────┘
+ * </code>
  */
 public class VaultDetailView {
 

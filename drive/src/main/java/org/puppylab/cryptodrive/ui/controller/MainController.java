@@ -74,7 +74,26 @@ public class MainController {
 
     public static MainController init() {
         instance = new MainController();
+        Runtime.getRuntime().addShutdownHook(new Thread(instance::shutdown, "cryptodrive-shutdown"));
         return instance;
+    }
+
+    /**
+     * Unmount every active FUSE filesystem. Invoked from the JVM shutdown hook
+     * registered by {@link #init()}; safe to call multiple times.
+     */
+    public void shutdown() {
+        if (mounts.isEmpty())
+            return;
+        logger.info("shutdown: closing {} mount(s)", mounts.size());
+        for (var e : mounts.entrySet()) {
+            try {
+                e.getValue().close();
+            } catch (Exception ex) {
+                logger.warn("shutdown: failed to close mount for {}", e.getKey(), ex);
+            }
+        }
+        mounts.clear();
     }
 
     private Vault loadVault(Path path) {
@@ -240,9 +259,9 @@ public class MainController {
     }
 
     /**
-     * Unlock {@code vault} by deriving the KEK from {@code password} and
-     * unwrapping the DEK. Returns {@code null} on success or a user-facing
-     * error message (e.g. wrong password).
+     * Unlock {@code vault} by deriving the KEK from {@code password} and unwrapping
+     * the DEK. Returns {@code null} on success or a user-facing error message (e.g.
+     * wrong password).
      */
     public String unlockVault(Vault vault, char[] password) {
         if (vault == null)
@@ -300,6 +319,7 @@ public class MainController {
         return vault.getPath().toAbsolutePath().normalize().toString();
     }
 
+    @SuppressWarnings("resource")
     private String mountVault(Vault vault) {
         List<String> free = MountUtils.listAvailableDriveLetters();
         if (free.isEmpty()) {
@@ -320,14 +340,6 @@ public class MainController {
     }
 
     // ── toolbar actions ──────────────────────────────────────────────────────
-
-    public void onNewVault() {
-        logger.info("onNewVault: dialog opens from the view");
-    }
-
-    public void onImportVault() {
-        logger.info("onImportVault: TODO pick existing vault dir");
-    }
 
     public void onSettings() {
         logger.info("onSettings: TODO open settings dialog");
