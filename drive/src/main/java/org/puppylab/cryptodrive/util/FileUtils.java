@@ -3,12 +3,43 @@ package org.puppylab.cryptodrive.util;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class FileUtils {
+
+    private static final byte[] INVALID_BYTES = "\\/:*?\"<>|`".getBytes(StandardCharsets.UTF_8);
+
+    public static boolean isValidName(String name) {
+        if (name == null) {
+            return false;
+        }
+        if (name.isEmpty()) {
+            return false;
+        }
+        if (name.endsWith(".")) {
+            return false;
+        }
+        byte[] utf8Name = name.getBytes(StandardCharsets.UTF_8);
+        if (utf8Name.length > 255) {
+            return false;
+        }
+        for (int i = 0; i < utf8Name.length; i++) {
+            int b = utf8Name[i];
+            if (b < 32) {
+                return false;
+            }
+            for (int j = 0; j < INVALID_BYTES.length; j++) {
+                if (b == INVALID_BYTES[j]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 
     private static Path home = null;
 

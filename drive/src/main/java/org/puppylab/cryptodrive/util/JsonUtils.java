@@ -1,6 +1,11 @@
 package org.puppylab.cryptodrive.util;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -51,6 +56,34 @@ public class JsonUtils {
             objectMapper.readerForUpdating(bean).readValue(data);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static void writeJson(Object obj, Writer write) {
+        try {
+            objectMapper.writeValue(write, obj);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static void writeJson(Object obj, Path path) {
+        try (var writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
+            objectMapper.writeValue(writer, obj);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static <T> T readJson(Path path, Class<T> clazz) {
+        try (var input = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+            return objectMapper.readValue(input, clazz);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }

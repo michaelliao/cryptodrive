@@ -18,9 +18,11 @@ public class EncryptUtils {
     public static final String AES_ALG       = "AES/GCM/NoPadding";
     public static final int    AES_KEY_SIZE  = 256;
     public static final int    AES_KEY_BYTES = AES_KEY_SIZE / 8;
-    public static final int    AES_TAG_SIZE  = 128;
-    public static final int    AES_TAG_BYTES = AES_TAG_SIZE / 8;
-    public static final int    AES_IV_BYTES  = 12;
+
+    public static final int AES_TAG_BYTES = 16;
+    public static final int AES_TAG_SIZE  = AES_TAG_BYTES * 8;
+
+    public static final int AES_IV_BYTES = 12;
 
     public static final String PBE_ALG        = "PBKDF2WithHmacSHA256";
     public static final int    PBE_KEY_SIZE   = 256;
