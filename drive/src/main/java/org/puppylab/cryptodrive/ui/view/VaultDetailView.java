@@ -47,6 +47,7 @@ public class VaultDetailView {
     private final Label          nameLabel;
     private final Label          pathLabel;
     private final Button         primaryButton;
+    private final Label          mountLabel;
     private final Button         secondaryButton;
     private final Font           nameFont;
     private final Font           bigFont;
@@ -127,6 +128,10 @@ public class VaultDetailView {
         primaryButton.setLayoutData(pbData);
         primaryButton.addListener(SWT.Selection, _ -> onPrimary());
 
+        mountLabel = new Label(center, SWT.NONE);
+        mountLabel.setForeground(display.getSystemColor(SWT.COLOR_DARK_GRAY));
+        mountLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
+
         secondaryButton = new Button(center, SWT.PUSH);
         GridData sbData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
         sbData.widthHint = 180;
@@ -161,6 +166,7 @@ public class VaultDetailView {
             nameLabel.setText("");
             pathLabel.setText("");
             setVisible(primaryButton, false);
+            setVisible(mountLabel, false);
             setVisible(secondaryButton, false);
         } else {
             nameLabel.setText(vault.getName());
@@ -169,10 +175,20 @@ public class VaultDetailView {
                 primaryButton.setText("Unlock Vault");
                 secondaryButton.setText("Config");
                 secondaryButton.setImage(Icons.get("settings"));
+                mountLabel.setText("");
+                setVisible(mountLabel, false);
             } else {
                 primaryButton.setText("Reveal Drive");
                 secondaryButton.setText("Lock");
                 secondaryButton.setImage(Icons.get("lock"));
+                String mp = controller.getMountPoint(vault);
+                if (mp != null && !mp.isBlank()) {
+                    mountLabel.setText("Vault is mounted at " + mp);
+                    setVisible(mountLabel, true);
+                } else {
+                    mountLabel.setText("");
+                    setVisible(mountLabel, false);
+                }
             }
             setVisible(primaryButton, true);
             setVisible(secondaryButton, true);
@@ -181,9 +197,9 @@ public class VaultDetailView {
         root.layout(true, true);
     }
 
-    private static void setVisible(Button b, boolean visible) {
-        b.setVisible(visible);
-        GridData gd = (GridData) b.getLayoutData();
+    private static void setVisible(org.eclipse.swt.widgets.Control c, boolean visible) {
+        c.setVisible(visible);
+        GridData gd = (GridData) c.getLayoutData();
         gd.exclude = !visible;
     }
 
