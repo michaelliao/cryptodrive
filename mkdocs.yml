@@ -1,0 +1,23 @@
+site_name: cryptodrive
+theme:
+  name: material
+  logo: assets/images/logo.png
+  palette:
+    primary: teal
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - toc.follow
+    - toc.integrate
+    - navigation.top
+  hide:
+    - navigation
+
+nav:
+  - Home: index.md
+  - Guide: guide.md
+  - Security: security.md
+  - Sync: sync.md
+
+copyright: |
+  <p>CryptoDrive copyright &copy; 2026. <a href="https://github.com/michaelliao/cryptodrive/releases">Download</a> | <a href="https://github.com/michaelliao/cryptodrive">GitHub</a></p>
