@@ -8,17 +8,24 @@ import java.util.List;
 public class VaultConfig {
 
     /**
-     * The volume name or null if not set.
+     * The volume name. NOTE this is not encrypted and can be displayed when Vault
+     * is locked.
      */
     public String volume;
 
     /**
+     * Auto lock when idle for N minutes. Disabled when autoLock <= 0.
+     */
+    public int autoLock;
+
+    /**
      * Mount path like "/home/ubuntu/mydrive/photo".
      * 
-     * Mount path is "D:" ~ "Z:" on Windows, or null for auto-select unused drive.
+     * Mount path is "D:" ~ "Z:" on Windows, or "" for auto-select unused drive.
      */
     public String mount;
 
+    public SyncConfig           syncConfig;
     public EncryptionConfig     encryption;
     public List<RecoveryConfig> recoveryConfigs;
 
@@ -30,6 +37,24 @@ public class VaultConfig {
         public String aesAlg;        // only support "AES/GCM/NoPadding"
 
         public String encryptedDekB64;
+    }
+
+    public static class SyncConfig {
+
+        public String s3Provider;
+
+        public String s3EndpointB64;
+
+        public String s3RegionB64;
+
+        public String s3BucketB64;
+
+        public String s3AccessIdB64;
+
+        public String s3AccessSecretB64;
+
+        public String s3RemotePathB64;
+
     }
 
     public static class RecoveryConfig {

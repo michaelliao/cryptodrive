@@ -11,6 +11,7 @@ import org.eclipse.swt.widgets.ToolItem;
 import org.puppylab.cryptodrive.core.Vault;
 import org.puppylab.cryptodrive.ui.Icons;
 import org.puppylab.cryptodrive.ui.controller.MainController;
+import org.puppylab.cryptodrive.ui.view.dialog.AppSettingDialog;
 import org.puppylab.cryptodrive.ui.view.dialog.ImportVaultDialog;
 import org.puppylab.cryptodrive.ui.view.dialog.NewVaultDialog;
 
@@ -43,19 +44,16 @@ public class ToolbarView {
         ToolItem removeBtn = addItem("Remove Vault", "remove", _ -> onRemoveVault(controller));
         removeBtn.setEnabled(false);
         controller.addSelectionListener(v -> removeBtn.setEnabled(v != null && v.isLocked()));
-        addItem("Settings", "settings", _ -> controller.onSettings());
-        addItem("Help", "help", _ -> controller.onHelp());
+        addItem("Settings", "settings", _ -> new AppSettingDialog(container.getShell(), controller).open());
     }
 
     private void onRemoveVault(MainController controller) {
         Vault v = controller.getSelected();
         if (v == null || !v.isLocked())
             return;
-        MessageBox mb = new MessageBox(container.getShell(),
-                SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+        MessageBox mb = new MessageBox(container.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
         mb.setText("Remove Vault");
-        mb.setMessage("Remove vault \"" + v.getName()
-                + "\" from the list?\nFiles on disk will NOT be deleted.");
+        mb.setMessage("Remove vault \"" + v.getName() + "\" from the list?\nFiles on disk will NOT be deleted.");
         if (mb.open() != SWT.YES)
             return;
         String err = controller.removeVault(v);

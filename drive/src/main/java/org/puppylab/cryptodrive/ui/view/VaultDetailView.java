@@ -16,6 +16,7 @@ import org.puppylab.cryptodrive.core.Vault;
 import org.puppylab.cryptodrive.ui.Icons;
 import org.puppylab.cryptodrive.ui.controller.MainController;
 import org.puppylab.cryptodrive.ui.view.dialog.UnlockVaultDialog;
+import org.puppylab.cryptodrive.ui.view.dialog.VaultConfigDialog;
 import org.puppylab.cryptodrive.util.FileUtils;
 
 /**
@@ -164,7 +165,7 @@ public class VaultDetailView {
             pathLabel.setText(FileUtils.prettyPath(vault.getPath()));
             if (vault.isLocked()) {
                 primaryButton.setText("Unlock Vault");
-                secondaryButton.setText("Options");
+                secondaryButton.setText("Config");
                 secondaryButton.setImage(Icons.get("settings"));
             } else {
                 primaryButton.setText("Reveal Drive");
@@ -200,7 +201,7 @@ public class VaultDetailView {
         if (current == null)
             return;
         if (current.isLocked()) {
-            // TODO: open vault options dialog
+            new VaultConfigDialog(root.getShell(), current, controller).open();
         } else {
             controller.lockVault(current);
         }

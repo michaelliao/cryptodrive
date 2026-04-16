@@ -20,7 +20,7 @@ import org.cryptomator.jfuse.api.FuseOperations;
 
 public class MountUtils {
 
-    private static final boolean IS_WINDOWS   = System.getProperty("os.name", "").toLowerCase().contains("win");
+    public static final boolean  IS_WINDOWS   = System.getProperty("os.name", "").toLowerCase().contains("win");
     private static final Pattern DRIVE_LETTER = Pattern.compile("^[D-Z]:$");
 
     /**

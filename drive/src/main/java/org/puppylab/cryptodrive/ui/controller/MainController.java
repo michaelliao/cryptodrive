@@ -72,6 +72,20 @@ public class MainController {
         return this.appSettings;
     }
 
+    /**
+     * Persist the current {@link AppSettings} to {@code settings.json}. Returns
+     * {@code null} on success or a user-facing error message.
+     */
+    public String saveAppSettings() {
+        try {
+            FileUtils.writeString(appSettingsPath, JsonUtils.toJson(appSettings));
+            return null;
+        } catch (RuntimeException e) {
+            logger.error("saveAppSettings failed", e);
+            return "Failed to save settings: " + e.getMessage();
+        }
+    }
+
     public static MainController init() {
         instance = new MainController();
         Runtime.getRuntime().addShutdownHook(new Thread(instance::shutdown, "cryptodrive-shutdown"));
@@ -205,7 +219,9 @@ public class MainController {
 
     private VaultConfig initVaultConfig(Path path, char[] password) {
         VaultConfig config = new VaultConfig();
+        // auto set volume:
         config.volume = path.getFileName().toString();
+
         config.encryption = new VaultConfig.EncryptionConfig();
         config.encryption.pbeAlg = EncryptUtils.PBE_ALG;
         config.encryption.pbeIterations = 1_000_000;
@@ -339,13 +355,54 @@ public class MainController {
         }
     }
 
-    // ── toolbar actions ──────────────────────────────────────────────────────
-
-    public void onSettings() {
-        logger.info("onSettings: TODO open settings dialog");
+    /**
+     * Persist the current {@link VaultConfig} of {@code vault} to its
+     * {@code vault.json}. Returns {@code null} on success or a user-facing error
+     * message.
+     */
+    public String saveVaultConfig(Vault vault) {
+        if (vault == null)
+            return "No vault selected.";
+        try {
+            Path vaultConfigPath = vault.getPath().resolve("vault.json");
+            FileUtils.writeString(vaultConfigPath, JsonUtils.toJson(vault.getConfig()));
+            return null;
+        } catch (RuntimeException e) {
+            logger.error("saveVaultConfig failed", e);
+            return "Failed to save config: " + e.getMessage();
+        }
     }
 
-    public void onHelp() {
-        logger.info("onHelp: TODO open help / about");
+    /**
+     * Change the master password of {@code vault}: verify {@code oldPw} by
+     * unwrapping the stored DEK, re-wrap with the KEK derived from {@code newPw},
+     * and persist. The vault may be locked or unlocked — the DEK in memory is
+     * untouched. Returns {@code null} on success or a user-facing error message.
+     */
+    public String changeVaultPassword(Vault vault, char[] oldPw, char[] newPw) {
+        if (vault == null)
+            return "No vault selected.";
+        try {
+            VaultConfig.EncryptionConfig enc = vault.getConfig().encryption;
+            byte[] salt = Base64Utils.b64(enc.pbeSaltB64);
+            byte[] wrappedDek = Base64Utils.b64(enc.encryptedDekB64);
+            byte[] oldKekBytes = EncryptUtils.derivePbeKey(oldPw, salt, enc.pbeIterations);
+            SecretKey oldKek = EncryptUtils.bytesToAesKey(oldKekBytes);
+            byte[] dek;
+            try {
+                dek = EncryptUtils.decrypt(wrappedDek, oldKek);
+            } catch (RuntimeException e) {
+                logger.info("changeVaultPassword: old password incorrect for {}", vault.getPath());
+                return "Incorrect old password.";
+            }
+            byte[] newKekBytes = EncryptUtils.derivePbeKey(newPw, salt, enc.pbeIterations);
+            SecretKey newKek = EncryptUtils.bytesToAesKey(newKekBytes);
+            byte[] newWrapped = EncryptUtils.encrypt(dek, newKek);
+            enc.encryptedDekB64 = Base64Utils.b64(newWrapped);
+            return saveVaultConfig(vault);
+        } catch (RuntimeException e) {
+            logger.error("changeVaultPassword failed", e);
+            return "Failed to change password: " + e.getMessage();
+        }
     }
 }

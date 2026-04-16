@@ -12,13 +12,6 @@ public class StringUtils {
         return str == null ? "" : str.strip();
     }
 
-    public static String checkNotEmpty(String value) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException();
-        }
-        return value.strip();
-    }
-
     private static DateTimeFormatter DATE_TIME_FMT = DateTimeFormatter
             .ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withZone(ZoneId.systemDefault());
 
