@@ -41,6 +41,8 @@ public class VaultConfig {
 
     public static class SyncConfig {
 
+        public boolean enabled;
+
         public String s3Provider;
 
         public String s3EndpointB64;
