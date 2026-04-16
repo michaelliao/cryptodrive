@@ -42,6 +42,12 @@ import org.slf4j.LoggerFactory;
  * rename, truncate, getattr, readdir, statfs. Similar feature set to exFAT — no
  * chmod/chown, no xattr, no symlinks, no hard links. {@code utimens} is a no-op
  * so {@code touch}/editor saves don't fail.
+ * <p>
+ * Every FUSE callback catches {@link Exception} and converts it to an errno —
+ * jFUSE will hard-crash the JVM on any uncaught exception thrown out of a
+ * native callback ("Unrecoverable uncaught exception encountered. The VM will
+ * now exit"), so we must trap RuntimeExceptions (e.g. {@code AEADBadTagException}
+ * surfaced via {@code EncryptException}) too, not only {@link IOException}.
  */
 public class CryptoFileSystem implements FuseOperations {
 
@@ -83,25 +89,31 @@ public class CryptoFileSystem implements FuseOperations {
 
     @Override
     public void init(FuseConnInfo conn, FuseConfig cfg) {
-        conn.setWant(conn.want() | (conn.capable() & FuseConnInfo.FUSE_CAP_BIG_WRITES));
-        conn.setMaxBackground(16);
-        conn.setCongestionThreshold(4);
+        logger.debug("init");
+        try {
+            conn.setWant(conn.want() | (conn.capable() & FuseConnInfo.FUSE_CAP_BIG_WRITES));
+            conn.setMaxBackground(16);
+            conn.setCongestionThreshold(4);
+        } catch (Exception e) {
+            logger.error("init failed", e);
+        }
     }
 
     @Override
     public void destroy() {
-        openFiles.forEach((fh, h) -> {
-            try {
-                h.channel.close();
-            } catch (IOException e) {
-                logger.warn("close fh {} failed", fh);
-            }
-        });
-        openFiles.clear();
+        logger.debug("destroy: openFiles={}", openFiles.size());
         try {
+            openFiles.forEach((fh, h) -> {
+                try {
+                    h.channel.close();
+                } catch (Exception e) {
+                    logger.warn("close fh {} failed", fh, e);
+                }
+            });
+            openFiles.clear();
             cfs.save();
-        } catch (RuntimeException e) {
-            logger.error("final save failed", e);
+        } catch (Exception e) {
+            logger.error("destroy failed", e);
         }
     }
 
@@ -109,6 +121,7 @@ public class CryptoFileSystem implements FuseOperations {
 
     @Override
     public int statfs(String path, Statvfs statvfs) {
+        logger.debug("statfs path={}", path);
         try {
             long bsize = 4096L;
             statvfs.setBsize(bsize);
@@ -118,13 +131,15 @@ public class CryptoFileSystem implements FuseOperations {
             statvfs.setBfree(fileStore.getUnallocatedSpace() / bsize);
             statvfs.setNameMax(255);
             return 0;
-        } catch (IOException e) {
+        } catch (Exception e) {
+            logger.error("statfs {} failed", path, e);
             return -errno.eio();
         }
     }
 
     @Override
     public int getattr(String path, Stat stat, FileInfo fi) {
+        logger.debug("getattr path={}", path);
         try (var _ = cfs.newContext()) {
             CryptoNode node = resolveNode(path);
             if (node == null)
@@ -137,13 +152,15 @@ public class CryptoFileSystem implements FuseOperations {
                 return -errno.eio();
             }
             return 0;
-        } catch (IOException e) {
+        } catch (Exception e) {
+            logger.error("getattr {} failed", path, e);
             return -errno.eio();
         }
     }
 
     @Override
     public int utimens(String path, TimeSpec atime, TimeSpec mtime, FileInfo fi) {
+        logger.debug("utimens path={}", path);
         try (var _ = cfs.newContext()) {
             CryptoNode node = resolveNode(path);
             if (node == null)
@@ -154,6 +171,9 @@ public class CryptoFileSystem implements FuseOperations {
                 mtime.getOptional().ifPresentOrElse(t -> d.updatedAt = t.toEpochMilli(), () -> d.updatedAt = now);
             }
             return 0;
+        } catch (Exception e) {
+            logger.error("utimens {} failed", path, e);
+            return -errno.eio();
         }
     }
 
@@ -161,6 +181,7 @@ public class CryptoFileSystem implements FuseOperations {
 
     @Override
     public int mkdir(String path, int mode) {
+        logger.debug("mkdir path={} mode={}", path, Integer.toOctalString(mode));
         try (var _ = cfs.newContext()) {
             CryptoDir parent = resolveParent(path);
             if (parent == null)
@@ -176,11 +197,15 @@ public class CryptoFileSystem implements FuseOperations {
             } catch (CryptoFsException e) {
                 return -errno.eexist();
             }
+        } catch (Exception e) {
+            logger.error("mkdir {} failed", path, e);
+            return -errno.eio();
         }
     }
 
     @Override
     public int rmdir(String path) {
+        logger.debug("rmdir path={}", path);
         try (var _ = cfs.newContext()) {
             CryptoDir parent = resolveParent(path);
             if (parent == null || parent.dirs == null)
@@ -197,11 +222,15 @@ public class CryptoFileSystem implements FuseOperations {
             parent.updatedAt = System.currentTimeMillis();
             cfs.save();
             return 0;
+        } catch (Exception e) {
+            logger.error("rmdir {} failed", path, e);
+            return -errno.eio();
         }
     }
 
     @Override
     public int opendir(String path, FileInfo fi) {
+        logger.debug("opendir path={}", path);
         try (var _ = cfs.newContext()) {
             CryptoNode node = resolveNode(path);
             if (node == null)
@@ -209,47 +238,53 @@ public class CryptoFileSystem implements FuseOperations {
             if (!(node instanceof CryptoDir))
                 return -errno.enotdir();
             return 0;
+        } catch (Exception e) {
+            logger.error("opendir {} failed", path, e);
+            return -errno.eio();
         }
     }
 
     @Override
     public int readdir(String path, DirFiller filler, long offset, FileInfo fi, int flags) {
+        logger.debug("readdir path={} offset={}", path, offset);
         try (var _ = cfs.newContext()) {
             CryptoNode node = resolveNode(path);
             if (node == null)
                 return -errno.enoent();
             if (!(node instanceof CryptoDir d))
                 return -errno.enotdir();
-            try {
-                filler.fill(".");
-                filler.fill("..");
-                if (d.dirs != null) {
-                    for (CryptoDir sub : d.dirs)
-                        filler.fill(sub.getName());
-                }
-                if (d.files != null) {
-                    for (CryptoFile f : d.files)
-                        filler.fill(f.getName());
-                }
-                d.accessedAt = System.currentTimeMillis();
-                return 0;
-            } catch (IOException e) {
-                return -errno.eio();
+            filler.fill(".");
+            filler.fill("..");
+            if (d.dirs != null) {
+                for (CryptoDir sub : d.dirs)
+                    filler.fill(sub.getName());
             }
+            if (d.files != null) {
+                for (CryptoFile f : d.files)
+                    filler.fill(f.getName());
+            }
+            d.accessedAt = System.currentTimeMillis();
+            return 0;
+        } catch (Exception e) {
+            logger.error("readdir {} failed", path, e);
+            return -errno.eio();
         }
     }
 
     @Override
     public int releasedir(String path, FileInfo fi) {
+        logger.debug("releasedir path={}", path);
         return 0;
     }
 
     @Override
     public int fsyncdir(String path, int datasync, FileInfo fi) {
+        logger.debug("fsyncdir path={} datasync={}", path, datasync);
         try {
             cfs.save();
             return 0;
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
+            logger.error("fsyncdir {} failed", path, e);
             return -errno.eio();
         }
     }
@@ -259,6 +294,7 @@ public class CryptoFileSystem implements FuseOperations {
     @Override
     @SuppressWarnings("resource")
     public int create(String path, int mode, FileInfo fi) {
+        logger.debug("create path={} mode={}", path, Integer.toOctalString(mode));
         try (var _ = cfs.newContext()) {
             CryptoDir parent = resolveParent(path);
             if (parent == null)
@@ -285,20 +321,22 @@ public class CryptoFileSystem implements FuseOperations {
                 fi.setFh(fh);
                 parent.updatedAt = System.currentTimeMillis();
                 cfs.save();
+                logger.debug("create path={} inode={} fh={}", path, f.inode, fh);
                 return 0;
             } catch (FileAlreadyExistsException e) {
                 // inode collision — unlikely but possible
                 return -errno.eexist();
-            } catch (IOException e) {
-                logger.error("create {} failed", path, e);
-                return -errno.eio();
             }
+        } catch (Exception e) {
+            logger.error("create {} failed", path, e);
+            return -errno.eio();
         }
     }
 
     @Override
     @SuppressWarnings("resource")
     public int open(String path, FileInfo fi) {
+        logger.debug("open path={}", path);
         try (var _ = cfs.newContext()) {
             CryptoNode node = resolveNode(path);
             if (node == null)
@@ -306,34 +344,34 @@ public class CryptoFileSystem implements FuseOperations {
             if (!(node instanceof CryptoFile f))
                 return -errno.eisdir();
             Path pp = physicalPath(f.inode);
-            try {
-                FileChannel ch;
-                SecretKey fek;
-                if (Files.isRegularFile(pp)) {
-                    ch = FileChannel.open(pp, StandardOpenOption.READ, StandardOpenOption.WRITE);
-                    fek = CryptoFileUtils.readHeader(ch, dek);
-                } else {
-                    // Metadata says it exists but blob is missing — materialize with fresh header.
-                    Files.createDirectories(pp.getParent());
-                    var init = CryptoFileUtils.generateHeader(dek);
-                    ch = FileChannel.open(pp, StandardOpenOption.CREATE_NEW, StandardOpenOption.READ,
-                            StandardOpenOption.WRITE);
-                    CryptoFileUtils.writeHeader(ch, init.header());
-                    fek = init.fek();
-                }
-                long fh = fileHandleGen.getAndIncrement();
-                openFiles.put(fh, new OpenFileHandle(f.inode, ch, fek));
-                fi.setFh(fh);
-                return 0;
-            } catch (IOException e) {
-                logger.error("open {} failed", path, e);
-                return -errno.eio();
+            FileChannel ch;
+            SecretKey fek;
+            if (Files.isRegularFile(pp)) {
+                ch = FileChannel.open(pp, StandardOpenOption.READ, StandardOpenOption.WRITE);
+                fek = CryptoFileUtils.readHeader(ch, dek);
+            } else {
+                // Metadata says it exists but blob is missing — materialize with fresh header.
+                Files.createDirectories(pp.getParent());
+                var init = CryptoFileUtils.generateHeader(dek);
+                ch = FileChannel.open(pp, StandardOpenOption.CREATE_NEW, StandardOpenOption.READ,
+                        StandardOpenOption.WRITE);
+                CryptoFileUtils.writeHeader(ch, init.header());
+                fek = init.fek();
             }
+            long fh = fileHandleGen.getAndIncrement();
+            openFiles.put(fh, new OpenFileHandle(f.inode, ch, fek));
+            fi.setFh(fh);
+            logger.debug("open path={} inode={} fh={}", path, f.inode, fh);
+            return 0;
+        } catch (Exception e) {
+            logger.error("open {} failed", path, e);
+            return -errno.eio();
         }
     }
 
     @Override
     public int read(String path, ByteBuffer buf, long size, long offset, FileInfo fi) {
+        logger.debug("read path={} size={} offset={} fh={}", path, size, offset, fi.getFh());
         OpenFileHandle h = openFiles.get(fi.getFh());
         if (h == null)
             return -errno.ebadf();
@@ -356,14 +394,15 @@ public class CryptoFileSystem implements FuseOperations {
                 pos += copy;
             }
             return total;
-        } catch (IOException e) {
-            logger.error("read {} failed", path, e);
+        } catch (Exception e) {
+            logger.error("read {} size={} offset={} fh={} failed", path, size, offset, fi.getFh(), e);
             return -errno.eio();
         }
     }
 
     @Override
     public int write(String path, ByteBuffer buf, long size, long offset, FileInfo fi) {
+        logger.debug("write path={} size={} offset={} fh={}", path, size, offset, fi.getFh());
         OpenFileHandle h = openFiles.get(fi.getFh());
         if (h == null)
             return -errno.ebadf();
@@ -388,8 +427,8 @@ public class CryptoFileSystem implements FuseOperations {
                 pos += n;
             }
             return written;
-        } catch (IOException e) {
-            logger.error("write {} failed", path, e);
+        } catch (Exception e) {
+            logger.error("write {} size={} offset={} fh={} failed", path, size, offset, fi.getFh(), e);
             return -errno.eio();
         }
     }
@@ -397,6 +436,7 @@ public class CryptoFileSystem implements FuseOperations {
     @Override
     @SuppressWarnings("resource")
     public int truncate(String path, long size, FileInfo fi) {
+        logger.debug("truncate path={} size={} fh={}", path, size, fi == null ? -1 : fi.getFh());
         try (var _ = cfs.newContext()) {
             CryptoNode node = resolveNode(path);
             if (node == null)
@@ -419,8 +459,6 @@ public class CryptoFileSystem implements FuseOperations {
                     fek = CryptoFileUtils.readHeader(ch, dek);
                 } catch (NoSuchFileException e) {
                     return -errno.enoent();
-                } catch (IOException e) {
-                    return -errno.eio();
                 }
                 closeAfter = true;
             }
@@ -464,57 +502,64 @@ public class CryptoFileSystem implements FuseOperations {
                 if (closeAfter) {
                     try {
                         ch.close();
-                    } catch (IOException ignored) {
+                    } catch (Exception ignored) {
                     }
                 }
             }
-        } catch (IOException e) {
-            logger.error("truncate {} failed", path, e);
+        } catch (Exception e) {
+            logger.error("truncate {} size={} failed", path, size, e);
             return -errno.eio();
         }
     }
 
     @Override
     public int flush(String path, FileInfo fi) {
+        logger.debug("flush path={} fh={}", path, fi.getFh());
         OpenFileHandle h = openFiles.get(fi.getFh());
         if (h == null)
             return -errno.ebadf();
         try {
             h.channel.force(false);
             return 0;
-        } catch (IOException e) {
+        } catch (Exception e) {
+            logger.error("flush {} failed", path, e);
             return -errno.eio();
         }
     }
 
     @Override
     public int fsync(String path, int datasync, FileInfo fi) {
+        logger.debug("fsync path={} datasync={} fh={}", path, datasync, fi.getFh());
         OpenFileHandle h = openFiles.get(fi.getFh());
         if (h == null)
             return -errno.ebadf();
         try {
             h.channel.force(datasync == 0);
             return 0;
-        } catch (IOException e) {
+        } catch (Exception e) {
+            logger.error("fsync {} failed", path, e);
             return -errno.eio();
         }
     }
 
     @Override
     public int release(String path, FileInfo fi) {
+        logger.debug("release path={} fh={}", path, fi.getFh());
         OpenFileHandle h = openFiles.remove(fi.getFh());
         if (h == null)
             return -errno.ebadf();
         try {
             h.channel.close();
             return 0;
-        } catch (IOException e) {
+        } catch (Exception e) {
+            logger.error("release {} failed", path, e);
             return -errno.eio();
         }
     }
 
     @Override
     public int unlink(String path) {
+        logger.debug("unlink path={}", path);
         try (var _ = cfs.newContext()) {
             CryptoDir parent = resolveParent(path);
             if (parent == null || parent.files == null)
@@ -527,16 +572,20 @@ public class CryptoFileSystem implements FuseOperations {
             parent.updatedAt = System.currentTimeMillis();
             try {
                 Files.deleteIfExists(physicalPath(f.inode));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 logger.warn("deleting blob for inode {} failed", f.inode, e);
             }
             cfs.save();
             return 0;
+        } catch (Exception e) {
+            logger.error("unlink {} failed", path, e);
+            return -errno.eio();
         }
     }
 
     @Override
     public int rename(String oldpath, String newpath, int flags) {
+        logger.debug("rename old={} new={} flags={}", oldpath, newpath, flags);
         try (var _ = cfs.newContext()) {
             CryptoDir oldParent = resolveParent(oldpath);
             CryptoDir newParent = resolveParent(newpath);
@@ -561,7 +610,7 @@ public class CryptoFileSystem implements FuseOperations {
                 newParent.files.remove(dstFile);
                 try {
                     Files.deleteIfExists(physicalPath(dstFile.inode));
-                } catch (IOException e) {
+                } catch (Exception e) {
                     logger.warn("deleting overwritten blob {} failed", dstFile.inode, e);
                 }
             }
@@ -586,6 +635,9 @@ public class CryptoFileSystem implements FuseOperations {
             newParent.updatedAt = now;
             cfs.save();
             return 0;
+        } catch (Exception e) {
+            logger.error("rename {} -> {} failed", oldpath, newpath, e);
+            return -errno.eio();
         }
     }
 

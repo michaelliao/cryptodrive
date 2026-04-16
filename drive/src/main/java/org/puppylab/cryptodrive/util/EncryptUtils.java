@@ -92,19 +92,53 @@ public class EncryptUtils {
         return buffer;
     }
 
+    /**
+     * Encrypt pdata to output at offset. Result:
+     * 
+     * output[offset, offset+12]: iv
+     * 
+     * output[offset+12, offset+12+length]: encryption
+     * 
+     * data output[offset+12+length, offset+12+length+16]: tag
+     */
+    public static void encrypt(byte[] pdata, SecretKey key, byte[] output, int outOffset) {
+        byte[] iv = generateIV();
+        try {
+            Cipher cipher = Cipher.getInstance(AES_ALG);
+            GCMParameterSpec spec = new GCMParameterSpec(AES_TAG_SIZE, iv);
+            cipher.init(Cipher.ENCRYPT_MODE, key, spec);
+            cipher.doFinal(pdata, 0, pdata.length, output, AES_IV_BYTES + outOffset);
+        } catch (GeneralSecurityException e) {
+            throw new EncryptException(e);
+        }
+        // copy iv to output:
+        System.arraycopy(iv, 0, output, outOffset, AES_IV_BYTES);
+    }
+
     public static byte[] decrypt(byte[] edata, SecretKey key) {
         byte[] output = new byte[edata.length - AES_IV_BYTES - AES_TAG_BYTES];
-        decrypt(edata, key, output, 0);
+        decrypt(edata, 0, key, output, 0);
         return output;
     }
 
-    public static void decrypt(byte[] edata, SecretKey key, byte[] output, int offset) {
-        byte[] iv = Arrays.copyOf(edata, AES_IV_BYTES);
+    /**
+     * Decrypt edata to output at offset.
+     * 
+     * edata[srcOffset, srcOffset+12]: iv
+     * 
+     * edata[srcOffset+12, ...]: encrypted data + tag
+     * 
+     * output[offset, ...]: decrypted data
+     * 
+     */
+    public static void decrypt(byte[] edata, int srcOffset, SecretKey key, byte[] output, int outOffset) {
+        byte[] iv = new byte[AES_IV_BYTES];
+        System.arraycopy(edata, srcOffset, iv, 0, AES_IV_BYTES);
         try {
             Cipher cipher = Cipher.getInstance(AES_ALG);
             GCMParameterSpec spec = new GCMParameterSpec(AES_TAG_SIZE, iv);
             cipher.init(Cipher.DECRYPT_MODE, key, spec);
-            cipher.doFinal(edata, AES_IV_BYTES, edata.length - AES_IV_BYTES, output, offset);
+            cipher.doFinal(edata, srcOffset + AES_IV_BYTES, edata.length - srcOffset - AES_IV_BYTES, output, outOffset);
         } catch (GeneralSecurityException e) {
             throw new EncryptException(e);
         }

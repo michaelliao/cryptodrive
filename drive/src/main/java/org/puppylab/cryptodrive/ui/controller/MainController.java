@@ -41,6 +41,7 @@ public class MainController {
     private final AppSettings           appSettings;
     private final Map<String, Vault>    vaults                 = new HashMap<>();
     private final Map<String, Fuse>     mounts                 = new HashMap<>();
+    private final Map<String, String>   mountPoints            = new HashMap<>();
     private final List<Consumer<Vault>> selectionListeners     = new ArrayList<>();
     private final List<Runnable>        vaultsChangedListeners = new ArrayList<>();
     private Vault                       selected;
@@ -319,6 +320,7 @@ public class MainController {
         if (vault == null)
             return "No vault selected.";
         Fuse fuse = mounts.remove(vaultKey(vault));
+        mountPoints.remove(vaultKey(vault));
         if (fuse != null) {
             try {
                 fuse.close();
@@ -356,12 +358,23 @@ public class MainController {
             CryptoFileSystem fs = new CryptoFileSystem(cryptoFs, Fuse.builder().errno());
             Fuse fuse = MountUtils.mount(letter, fs, vault.getName());
             mounts.put(vaultKey(vault), fuse);
+            mountPoints.put(vaultKey(vault), letter);
             logger.info("mounted vault '{}' at {}", vault.getName(), letter);
             return null;
         } catch (Exception e) {
             logger.error("mount failed for {}", vault.getPath(), e);
             return "Failed to mount at " + letter + ": " + e.getMessage();
         }
+    }
+
+    /**
+     * Current mount point of {@code vault} (e.g. {@code "F:"} on Windows, a
+     * directory path on Linux/macOS), or {@code null} if not mounted.
+     */
+    public String getMountPoint(Vault vault) {
+        if (vault == null)
+            return null;
+        return mountPoints.get(vaultKey(vault));
     }
 
     /**

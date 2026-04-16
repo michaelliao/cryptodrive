@@ -7,11 +7,13 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.program.Program;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.MessageBox;
 import org.puppylab.cryptodrive.core.Vault;
 import org.puppylab.cryptodrive.ui.Icons;
 import org.puppylab.cryptodrive.ui.controller.MainController;
@@ -192,9 +194,30 @@ public class VaultDetailView {
             UnlockVaultDialog dialog = new UnlockVaultDialog(root.getShell(), current.getName());
             dialog.open(pw -> controller.unlockVault(current, pw));
         } else {
-            // TODO: open mount point in OS file explorer
+            revealMount();
         }
         update(current);
+    }
+
+    private void revealMount() {
+        String mp = controller.getMountPoint(current);
+        if (mp == null || mp.isBlank()) {
+            showError("The vault is not mounted.");
+            return;
+        }
+        // On Windows, "F:" alone doesn't always open the drive root in Explorer;
+        // append a separator so it's treated as a directory path.
+        String target = mp.endsWith(":") ? mp + "\\" : mp;
+        if (!Program.launch(target)) {
+            showError("Failed to open: " + target);
+        }
+    }
+
+    private void showError(String msg) {
+        MessageBox mb = new MessageBox(root.getShell(), SWT.ICON_ERROR | SWT.OK);
+        mb.setText("Reveal Drive");
+        mb.setMessage(msg);
+        mb.open();
     }
 
     private void onSecondary() {

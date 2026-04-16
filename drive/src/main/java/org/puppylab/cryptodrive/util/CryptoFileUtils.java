@@ -6,8 +6,6 @@ import java.nio.channels.FileChannel;
 
 import javax.crypto.SecretKey;
 
-import org.puppylab.cryptodrive.core.exception.EncryptException;
-
 /**
  * Header / block codec for {@code .c9e} encryption files.
  *
@@ -19,7 +17,7 @@ import org.puppylab.cryptodrive.core.exception.EncryptException;
  *   ...
  *
  * Header (64 B):
- *   4 B  version (little-endian u32, current = 1)
+ *   4 B  (version, reserved, reserved, reserved) current version = 1
  *  12 B  IV
  *  32 B  FEK ciphertext (AES-GCM(DEK))
  *  16 B  GCM tag
@@ -33,64 +31,53 @@ import org.puppylab.cryptodrive.core.exception.EncryptException;
  */
 public final class CryptoFileUtils {
 
-    public static final int HEADER_SIZE       = 64;
-    public static final int HEADER_VERSION    = 1;
-    public static final int HEADER_VERSION_OFFSET = 0;
-    public static final int HEADER_WRAP_OFFSET    = 4;  // IV|enc FEK|tag (60 B) lives here
+    public static final int  HEADER_SIZE        = 64;
+    public static final byte HEADER_VERSION     = 1;
+    public static final int  HEADER_WRAP_OFFSET = 4; // IV|enc FEK|tag (60 B) lives here
 
-    public static final int BLOCK_META_SIZE   = 4;
-    public static final int BLOCK_IV_SIZE     = EncryptUtils.AES_IV_BYTES;   // 12
-    public static final int BLOCK_TAG_SIZE    = EncryptUtils.AES_TAG_BYTES;  // 16
-    public static final int BLOCK_OVERHEAD    = BLOCK_META_SIZE + BLOCK_IV_SIZE + BLOCK_TAG_SIZE; // 32
-    public static final int BLOCK_PLAIN_SIZE  = 32 * 1024;                   // 32 768
-    public static final int BLOCK_ENC_SIZE    = BLOCK_PLAIN_SIZE + BLOCK_OVERHEAD; // 32 800
+    public static final int BLOCK_META_SIZE  = 4;
+    public static final int BLOCK_IV_SIZE    = EncryptUtils.AES_IV_BYTES;                        // 12
+    public static final int BLOCK_TAG_SIZE   = EncryptUtils.AES_TAG_BYTES;                       // 16
+    public static final int BLOCK_OVERHEAD   = BLOCK_META_SIZE + BLOCK_IV_SIZE + BLOCK_TAG_SIZE; // 32
+    public static final int BLOCK_PLAIN_SIZE = 32 * 1024;                                        // 32 768
+    public static final int BLOCK_ENC_SIZE   = BLOCK_PLAIN_SIZE + BLOCK_OVERHEAD;                // 32 800
 
-    private static final int FEK_BYTES  = EncryptUtils.AES_KEY_BYTES; // 32
-    private static final int FEK_WRAPPED_SIZE = FEK_BYTES + BLOCK_IV_SIZE + BLOCK_TAG_SIZE; // 60
+    private static final int FEK_BYTES = EncryptUtils.AES_KEY_BYTES; // 32
 
-    private CryptoFileUtils() {}
+    private CryptoFileUtils() {
+    }
 
     // ─── header ────────────────────────────────────────────────────────────
 
     /**
      * Generate a random FEK, wrap it with {@code dek}, and return the 64-byte
-     * header ready to write at offset 0. The caller receives the raw FEK bytes
-     * via the return record for caching in the open-file handle.
+     * header ready to write at offset 0. The caller receives the raw FEK bytes via
+     * the return record for caching in the open-file handle.
      */
     public static HeaderInit generateHeader(SecretKey dek) {
-        byte[] fek = EncryptUtils.generateKey();                 // 32 B
-        byte[] wrapped = EncryptUtils.encrypt(fek, dek);         // 12 + 32 + 16 = 60 B
-        if (wrapped.length != FEK_WRAPPED_SIZE) {
-            throw new EncryptException("unexpected wrap size: " + wrapped.length);
-        }
+        byte[] fek = EncryptUtils.generateKey(); // 32 B
         byte[] header = new byte[HEADER_SIZE];
-        // little-endian u32 version
-        header[0] = (byte) (HEADER_VERSION & 0xff);
-        header[1] = (byte) ((HEADER_VERSION >>> 8) & 0xff);
-        header[2] = (byte) ((HEADER_VERSION >>> 16) & 0xff);
-        header[3] = (byte) ((HEADER_VERSION >>> 24) & 0xff);
-        System.arraycopy(wrapped, 0, header, HEADER_WRAP_OFFSET, FEK_WRAPPED_SIZE);
+        // u8 version at [0]; [1..4) reserved (zero from fresh array)
+        header[0] = HEADER_VERSION;
+        // wrap FEK in place into header[4..64): IV(12) | ct(32) | tag(16)
+        EncryptUtils.encrypt(fek, dek, header, HEADER_WRAP_OFFSET);
         return new HeaderInit(header, EncryptUtils.bytesToAesKey(fek));
     }
 
     /** Read the 64-byte header at offset 0, verify version, and unwrap the FEK. */
     public static SecretKey readHeader(FileChannel ch, SecretKey dek) throws IOException {
-        ByteBuffer buf = ByteBuffer.allocate(HEADER_SIZE);
-        int n = readFully(ch, buf, 0);
+        byte[] h = new byte[HEADER_SIZE];
+        int n = readFully(ch, ByteBuffer.wrap(h), 0);
         if (n != HEADER_SIZE) {
             throw new IOException("truncated header: " + n + " bytes");
         }
-        byte[] h = buf.array();
-        int version = (h[0] & 0xff)
-                   | ((h[1] & 0xff) << 8)
-                   | ((h[2] & 0xff) << 16)
-                   | ((h[3] & 0xff) << 24);
+        int version = h[0];
         if (version != HEADER_VERSION) {
             throw new IOException("unsupported encryption version: " + version);
         }
-        byte[] wrapped = new byte[FEK_WRAPPED_SIZE];
-        System.arraycopy(h, HEADER_WRAP_OFFSET, wrapped, 0, FEK_WRAPPED_SIZE);
-        byte[] fek = EncryptUtils.decrypt(wrapped, dek);
+        // h[1..4) reserved. Unwrap directly out of h[4..64) into the FEK buffer.
+        byte[] fek = new byte[FEK_BYTES];
+        EncryptUtils.decrypt(h, HEADER_WRAP_OFFSET, dek, fek, 0);
         return EncryptUtils.bytesToAesKey(fek);
     }
 
@@ -118,30 +105,30 @@ public final class CryptoFileUtils {
         if (encLen < BLOCK_OVERHEAD) {
             throw new IOException("corrupt block at index " + blockIndex + ": only " + encLen + " bytes");
         }
-        ByteBuffer buf = ByteBuffer.allocate(encLen);
-        readFully(ch, buf, blockStart);
-        // skip 4 B meta → treat [IV|data|tag] as a standard EncryptUtils envelope
-        byte[] envelope = new byte[encLen - BLOCK_META_SIZE];
-        System.arraycopy(buf.array(), BLOCK_META_SIZE, envelope, 0, envelope.length);
-        return EncryptUtils.decrypt(envelope, fek);
+        // raw layout: meta(4) | IV(12) | ct | tag(16). decrypt reads from
+        // srcOffset=4 to end of raw, so no envelope copy is needed.
+        byte[] raw = new byte[encLen];
+        readFully(ch, ByteBuffer.wrap(raw), blockStart);
+        byte[] plain = new byte[encLen - BLOCK_OVERHEAD];
+        EncryptUtils.decrypt(raw, BLOCK_META_SIZE, fek, plain, 0);
+        return plain;
     }
 
     /**
      * Encrypt {@code plain} (0..{@link #BLOCK_PLAIN_SIZE} bytes) as block
-     * {@code blockIndex}. The block is written in full and will truncate any
-     * tail beyond it.
+     * {@code blockIndex}. The block is written in full and will truncate any tail
+     * beyond it.
      */
     public static void writeBlock(FileChannel ch, SecretKey fek, long blockIndex, byte[] plain) throws IOException {
         if (plain.length > BLOCK_PLAIN_SIZE) {
             throw new IllegalArgumentException("plain block > " + BLOCK_PLAIN_SIZE);
         }
-        byte[] envelope = EncryptUtils.encrypt(plain, fek);      // IV|ct|tag = 12+len+16
-        ByteBuffer out = ByteBuffer.allocate(BLOCK_META_SIZE + envelope.length);
-        out.putInt(0);                                           // reserved meta = 0 (big-endian; reserved so endianness doesn't matter)
-        out.put(envelope);
-        out.flip();
+        // single allocation: meta(4) | IV(12) | ct | tag(16). meta stays zero
+        // (fresh array); encrypt fills IV+ct+tag in place starting at offset 4.
+        byte[] raw = new byte[BLOCK_OVERHEAD + plain.length];
+        EncryptUtils.encrypt(plain, fek, raw, BLOCK_META_SIZE);
         long blockStart = HEADER_SIZE + blockIndex * BLOCK_ENC_SIZE;
-        writeFully(ch, out, blockStart);
+        writeFully(ch, ByteBuffer.wrap(raw), blockStart);
     }
 
     // ─── size helpers ──────────────────────────────────────────────────────
@@ -151,14 +138,16 @@ public final class CryptoFileUtils {
      * {@code encLen == 0} (missing or empty blob) → {@code 0}.
      */
     public static long getPlainFileSize(long encLen) {
-        if (encLen == 0) return 0;
+        if (encLen == 0)
+            return 0;
         if (encLen < HEADER_SIZE) {
             throw new IllegalStateException("corrupt encryption file: " + encLen + " bytes");
         }
         long body = encLen - HEADER_SIZE;
-        if (body == 0) return 0;
+        if (body == 0)
+            return 0;
         long fullBlocks = body / BLOCK_ENC_SIZE;
-        long lastBlock  = body % BLOCK_ENC_SIZE;
+        long lastBlock = body % BLOCK_ENC_SIZE;
         if (lastBlock != 0 && lastBlock < BLOCK_OVERHEAD) {
             throw new IllegalStateException("corrupt tail block: " + lastBlock + " bytes");
         }
@@ -167,7 +156,8 @@ public final class CryptoFileUtils {
 
     /** Encryption file length on disk for a plain size of {@code plainLen}. */
     public static long getEncryptionFileSize(long plainLen) {
-        if (plainLen == 0) return HEADER_SIZE;
+        if (plainLen == 0)
+            return HEADER_SIZE;
         long fullBlocks = plainLen / BLOCK_PLAIN_SIZE;
         long tail = plainLen % BLOCK_PLAIN_SIZE;
         long body = fullBlocks * BLOCK_ENC_SIZE + (tail == 0 ? 0 : tail + BLOCK_OVERHEAD);
@@ -180,7 +170,8 @@ public final class CryptoFileUtils {
         int total = 0;
         while (buf.hasRemaining()) {
             int n = ch.read(buf, position + total);
-            if (n < 0) break;
+            if (n < 0)
+                break;
             total += n;
         }
         return total;
@@ -192,6 +183,10 @@ public final class CryptoFileUtils {
         }
     }
 
-    /** Result of {@link #generateHeader(SecretKey)}: serialized header + the FEK to cache. */
-    public record HeaderInit(byte[] header, SecretKey fek) {}
+    /**
+     * Result of {@link #generateHeader(SecretKey)}: serialized header + the FEK to
+     * cache.
+     */
+    public record HeaderInit(byte[] header, SecretKey fek) {
+    }
 }

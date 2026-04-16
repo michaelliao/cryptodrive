@@ -18,6 +18,8 @@
 		</encoder>
 	</appender>
 
+	<logger name="org.puppylab.cryptodrive.core.fs" level="DEBUG" />
+
 	<root level="INFO">
 		<appender-ref ref="STDOUT" />
 		<appender-ref ref="FILE" />
