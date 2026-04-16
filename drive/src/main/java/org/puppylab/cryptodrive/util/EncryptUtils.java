@@ -176,7 +176,12 @@ public class EncryptUtils {
 
         @Override
         public byte[] getEncoded() {
-            return this.key;
+            // Defensive copy: JCE providers (notably AES-GCM) treat the bytes
+            // returned here as scratch and may zero them out after building the
+            // key schedule. Without a copy, the second cipher use on this
+            // SecretKey would operate on an all-zero key, silently producing
+            // wrong ciphertext on disk.
+            return Arrays.copyOf(this.key, this.key.length);
         }
     }
 }

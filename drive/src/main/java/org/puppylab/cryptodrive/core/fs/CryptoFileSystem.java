@@ -31,6 +31,7 @@ import org.puppylab.cryptodrive.core.node.CryptoDir;
 import org.puppylab.cryptodrive.core.node.CryptoFile;
 import org.puppylab.cryptodrive.core.node.CryptoFs;
 import org.puppylab.cryptodrive.core.node.CryptoNode;
+import org.puppylab.cryptodrive.util.Base64Utils;
 import org.puppylab.cryptodrive.util.CryptoFileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,8 +47,9 @@ import org.slf4j.LoggerFactory;
  * Every FUSE callback catches {@link Exception} and converts it to an errno —
  * jFUSE will hard-crash the JVM on any uncaught exception thrown out of a
  * native callback ("Unrecoverable uncaught exception encountered. The VM will
- * now exit"), so we must trap RuntimeExceptions (e.g. {@code AEADBadTagException}
- * surfaced via {@code EncryptException}) too, not only {@link IOException}.
+ * now exit"), so we must trap RuntimeExceptions (e.g.
+ * {@code AEADBadTagException} surfaced via {@code EncryptException}) too, not
+ * only {@link IOException}.
  */
 public class CryptoFileSystem implements FuseOperations {
 
@@ -121,7 +123,6 @@ public class CryptoFileSystem implements FuseOperations {
 
     @Override
     public int statfs(String path, Statvfs statvfs) {
-        logger.debug("statfs path={}", path);
         try {
             long bsize = 4096L;
             statvfs.setBsize(bsize);
@@ -139,7 +140,6 @@ public class CryptoFileSystem implements FuseOperations {
 
     @Override
     public int getattr(String path, Stat stat, FileInfo fi) {
-        logger.debug("getattr path={}", path);
         try (var _ = cfs.newContext()) {
             CryptoNode node = resolveNode(path);
             if (node == null)
@@ -160,7 +160,6 @@ public class CryptoFileSystem implements FuseOperations {
 
     @Override
     public int utimens(String path, TimeSpec atime, TimeSpec mtime, FileInfo fi) {
-        logger.debug("utimens path={}", path);
         try (var _ = cfs.newContext()) {
             CryptoNode node = resolveNode(path);
             if (node == null)
@@ -230,7 +229,6 @@ public class CryptoFileSystem implements FuseOperations {
 
     @Override
     public int opendir(String path, FileInfo fi) {
-        logger.debug("opendir path={}", path);
         try (var _ = cfs.newContext()) {
             CryptoNode node = resolveNode(path);
             if (node == null)
@@ -246,7 +244,6 @@ public class CryptoFileSystem implements FuseOperations {
 
     @Override
     public int readdir(String path, DirFiller filler, long offset, FileInfo fi, int flags) {
-        logger.debug("readdir path={} offset={}", path, offset);
         try (var _ = cfs.newContext()) {
             CryptoNode node = resolveNode(path);
             if (node == null)
@@ -273,7 +270,6 @@ public class CryptoFileSystem implements FuseOperations {
 
     @Override
     public int releasedir(String path, FileInfo fi) {
-        logger.debug("releasedir path={}", path);
         return 0;
     }
 
@@ -321,7 +317,7 @@ public class CryptoFileSystem implements FuseOperations {
                 fi.setFh(fh);
                 parent.updatedAt = System.currentTimeMillis();
                 cfs.save();
-                logger.debug("create path={} inode={} fh={}", path, f.inode, fh);
+                logger.debug("create path={} inode={} fh={} fek={}", path, f.inode, fh, fekB64(init.fek()));
                 return 0;
             } catch (FileAlreadyExistsException e) {
                 // inode collision — unlikely but possible
@@ -361,7 +357,7 @@ public class CryptoFileSystem implements FuseOperations {
             long fh = fileHandleGen.getAndIncrement();
             openFiles.put(fh, new OpenFileHandle(f.inode, ch, fek));
             fi.setFh(fh);
-            logger.debug("open path={} inode={} fh={}", path, f.inode, fh);
+            logger.debug("open path={} inode={} fh={} fek={}", path, f.inode, fh, fekB64(fek));
             return 0;
         } catch (Exception e) {
             logger.error("open {} failed", path, e);
@@ -375,6 +371,7 @@ public class CryptoFileSystem implements FuseOperations {
         OpenFileHandle h = openFiles.get(fi.getFh());
         if (h == null)
             return -errno.ebadf();
+        logger.debug("read fh={} inode={} fek={}", fi.getFh(), h.inode, fekB64(h.fek));
         try {
             long plainLen = CryptoFileUtils.getPlainFileSize(h.channel.size());
             if (offset >= plainLen)
@@ -406,6 +403,7 @@ public class CryptoFileSystem implements FuseOperations {
         OpenFileHandle h = openFiles.get(fi.getFh());
         if (h == null)
             return -errno.ebadf();
+        logger.debug("write fh={} inode={} fek={}", fi.getFh(), h.inode, fekB64(h.fek));
         try {
             int toWrite = (int) size;
             int written = 0;
@@ -687,6 +685,10 @@ public class CryptoFileSystem implements FuseOperations {
     private static String leafName(String absPath) {
         int i = absPath.lastIndexOf('/');
         return absPath.substring(i + 1);
+    }
+
+    private static String fekB64(SecretKey k) {
+        return k == null ? "<null>" : Base64Utils.b64(k.getEncoded());
     }
 
     private Path physicalPath(int inode) {
