@@ -14,7 +14,8 @@ import org.cryptomator.jfuse.api.Fuse;
 import org.puppylab.cryptodrive.core.AppSettings;
 import org.puppylab.cryptodrive.core.Vault;
 import org.puppylab.cryptodrive.core.VaultConfig;
-import org.puppylab.cryptodrive.core.fs.MirrorFileSystem;
+import org.puppylab.cryptodrive.core.fs.CryptoFileSystem;
+import org.puppylab.cryptodrive.core.node.CryptoFs;
 import org.puppylab.cryptodrive.util.Base64Utils;
 import org.puppylab.cryptodrive.util.EncryptUtils;
 import org.puppylab.cryptodrive.util.FileUtils;
@@ -306,11 +307,8 @@ public class MainController {
         }
         String letter = free.getFirst();
         try {
-            Path dataDir = vault.getPath().resolve("data");
-            if (!Files.isDirectory(dataDir)) {
-                Files.createDirectories(dataDir);
-            }
-            MirrorFileSystem fs = new MirrorFileSystem(dataDir, Fuse.builder().errno());
+            CryptoFs cryptoFs = new CryptoFs(vault.getSecretKey(), vault.getPath());
+            CryptoFileSystem fs = new CryptoFileSystem(cryptoFs, Fuse.builder().errno());
             Fuse fuse = MountUtils.mount(letter, fs, vault.getName());
             mounts.put(vaultKey(vault), fuse);
             logger.info("mounted vault '{}' at {}", vault.getName(), letter);

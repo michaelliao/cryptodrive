@@ -29,6 +29,10 @@ public class Vault {
         this.secretKey = key;
     }
 
+    public SecretKey getSecretKey() {
+        return secretKey;
+    }
+
     public String getName() {
         return this.path.getFileName().toString();
     }
