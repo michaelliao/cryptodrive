@@ -119,6 +119,22 @@ public class CryptoFs {
         JsonUtils.writeJson(root, this.metaPath);
     }
 
+    public SecretKey getKey() {
+        return key;
+    }
+
+    public Path getRootPath() {
+        return rootPath;
+    }
+
+    public CryptoDir getRoot() {
+        return root;
+    }
+
+    public CryptoFsContext newContext() {
+        return new CryptoFsContext(key, nextDirInode, nextFileInode);
+    }
+
     public void print() {
         System.out.printf("FS: %s\n", this.rootPath);
         this.root.print(0);
