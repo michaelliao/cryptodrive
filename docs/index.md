@@ -5,6 +5,10 @@ that appears as a regular drive in your file manager. Everything you save into i
 is transparently encrypted before it touches disk — drag, drop, edit, and open
 files like usual, while only ciphertext ever leaves your machine.
 
+## Download
+
+Pre-compiled release can be downloaded from [GitHub](https://github.com/michaelliao/cryptodrive/releases/latest). Source code can also be get from [GitHub](https://github.com/michaelliao/cryptodrive).
+
 ## Features
 
 ### Virtual encrypted drive
