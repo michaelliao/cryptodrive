@@ -2,7 +2,10 @@ package org.puppylab.cryptodrive.ui.view.dialog;
 
 import static org.puppylab.cryptodrive.util.I18nUtils.i18n;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+
+import javax.crypto.SecretKey;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -20,6 +23,9 @@ import org.eclipse.swt.widgets.Text;
 import org.puppylab.cryptodrive.core.Vault;
 import org.puppylab.cryptodrive.core.VaultConfig;
 import org.puppylab.cryptodrive.ui.controller.MainController;
+import org.puppylab.cryptodrive.util.Base64Utils;
+import org.puppylab.cryptodrive.util.EncryptUtils;
+import org.puppylab.cryptodrive.util.JsonUtils;
 import org.puppylab.cryptodrive.util.MountUtils;
 
 /**
@@ -197,20 +203,225 @@ public class VaultConfigDialog {
 
     // ── Sync ─────────────────────────────────────────────────────────────────
 
+    private static final String   MASKED     = "\u2022\u2022\u2022\u2022\u2022\u2022";
+    private static final String[] SYNC_TYPES = { "S3" };
+
     private void buildSyncTab(TabFolder tabs) {
         TabItem item = new TabItem(tabs, SWT.NONE);
         item.setText(i18n("tab.sync"));
 
         Composite body = tabComposite(tabs);
-        GridLayout gl = new GridLayout(1, false);
+        GridLayout gl = new GridLayout(2, false);
         gl.marginWidth = 14;
         gl.marginHeight = 14;
+        gl.horizontalSpacing = 8;
+        gl.verticalSpacing = 10;
         body.setLayout(gl);
 
-        Label placeholder = new Label(body, SWT.NONE);
-        placeholder.setText(i18n("vaultConfig.syncPlaceholder"));
-        placeholder.setForeground(shell.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
-        placeholder.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+        VaultConfig cfg = vault.getConfig();
+        if (cfg.syncConfig == null) {
+            cfg.syncConfig = new VaultConfig.SyncConfig();
+        }
+        VaultConfig.SyncConfig syncCfg = cfg.syncConfig;
+
+        // ── Enable sync checkbox ─────────────────────────────────────────
+        Button enableSync = new Button(body, SWT.CHECK);
+        enableSync.setText(i18n("vaultConfig.sync.enabled"));
+        enableSync.setSelection(syncCfg.enabled);
+        GridData esd = new GridData(SWT.LEFT, SWT.CENTER, true, false);
+        esd.horizontalSpan = 2;
+        enableSync.setLayoutData(esd);
+        enableSync.addListener(SWT.Selection, _ -> {
+            syncCfg.enabled = enableSync.getSelection();
+            controller.saveVaultConfig(vault);
+        });
+
+        // ── Type combo ───────────────────────────────────────────────────
+        label(body, i18n("vaultConfig.sync.type"));
+        Combo typeCombo = new Combo(body, SWT.READ_ONLY | SWT.DROP_DOWN);
+        typeCombo.setItems(SYNC_TYPES);
+        int typeIdx = 0;
+        if (syncCfg.type != null) {
+            for (int i = 0; i < SYNC_TYPES.length; i++) {
+                if (SYNC_TYPES[i].equalsIgnoreCase(syncCfg.type)) {
+                    typeIdx = i;
+                    break;
+                }
+            }
+        }
+        typeCombo.select(typeIdx);
+        typeCombo.setLayoutData(fillWide());
+        typeCombo.addListener(SWT.Selection, _ -> {
+            int i = typeCombo.getSelectionIndex();
+            if (i >= 0) {
+                syncCfg.type = SYNC_TYPES[i].toLowerCase();
+                controller.saveVaultConfig(vault);
+            }
+        });
+
+        // ── Config section header ────────────────────────────────────────
+        Label configHeader = new Label(body, SWT.NONE);
+        configHeader.setText(i18n("vaultConfig.sync.config"));
+        GridData chd = new GridData(SWT.LEFT, SWT.CENTER, true, false);
+        chd.horizontalSpan = 2;
+        configHeader.setLayoutData(chd);
+
+        // ── S3 config fields (initially masked) ──────────────────────────
+        label(body, i18n("vaultConfig.sync.endpoint"));
+        Text endpointField = new Text(body, SWT.BORDER);
+        endpointField.setLayoutData(fillWide());
+        endpointField.setText(MASKED);
+        endpointField.setEditable(false);
+
+        label(body, i18n("vaultConfig.sync.region"));
+        Text regionField = new Text(body, SWT.BORDER);
+        regionField.setLayoutData(fillWide());
+        regionField.setText(MASKED);
+        regionField.setEditable(false);
+
+        label(body, i18n("vaultConfig.sync.bucket"));
+        Text bucketField = new Text(body, SWT.BORDER);
+        bucketField.setLayoutData(fillWide());
+        bucketField.setText(MASKED);
+        bucketField.setEditable(false);
+
+        label(body, i18n("vaultConfig.sync.accessId"));
+        Text accessIdField = new Text(body, SWT.BORDER);
+        accessIdField.setLayoutData(fillWide());
+        accessIdField.setText(MASKED);
+        accessIdField.setEditable(false);
+
+        label(body, i18n("vaultConfig.sync.accessSecret"));
+        Text accessSecretField = new Text(body, SWT.BORDER);
+        accessSecretField.setLayoutData(fillWide());
+        accessSecretField.setText(MASKED);
+        accessSecretField.setEditable(false);
+
+        label(body, i18n("vaultConfig.sync.remotePath"));
+        Text remotePathField = new Text(body, SWT.BORDER);
+        remotePathField.setLayoutData(fillWide());
+        remotePathField.setText(MASKED);
+        remotePathField.setEditable(false);
+
+        Text[] configFields = { endpointField, regionField, bucketField, accessIdField, accessSecretField,
+                remotePathField };
+
+        // ── Buttons row ──────────────────────────────────────────────────
+        new Label(body, SWT.NONE); // spacer for label column
+        Composite btnRow = new Composite(body, SWT.NONE);
+        GridLayout btnLayout = new GridLayout(3, false);
+        btnLayout.marginWidth = 0;
+        btnLayout.marginHeight = 0;
+        btnRow.setLayout(btnLayout);
+        btnRow.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+        Button changeBtn = new Button(btnRow, SWT.PUSH);
+        changeBtn.setText(i18n("btn.change"));
+
+        Button testBtn = new Button(btnRow, SWT.PUSH);
+        testBtn.setText(i18n("btn.testConnection"));
+        testBtn.setVisible(false);
+
+        Button saveBtn = new Button(btnRow, SWT.PUSH);
+        saveBtn.setText(i18n("btn.save"));
+        saveBtn.setVisible(false);
+
+        // ── Status label ─────────────────────────────────────────────────
+        Label status = new Label(body, SWT.NONE);
+        GridData sd = new GridData(SWT.FILL, SWT.CENTER, true, false);
+        sd.horizontalSpan = 2;
+        status.setLayoutData(sd);
+
+        // ── Change button: prompt password and decrypt config ─────────
+        changeBtn.addListener(SWT.Selection, _ -> {
+            status.setText("");
+            PasswordInputDialog pwDialog = new PasswordInputDialog(shell, i18n("vaultConfig.sync.enterPassword"));
+            char[] password = pwDialog.open();
+            if (password == null)
+                return;
+            try {
+                VaultConfig.EncryptionConfig enc = cfg.encryption;
+                byte[] salt = Base64Utils.b64(enc.pbeSaltB64);
+                byte[] kekBytes = EncryptUtils.derivePbeKey(password, salt, enc.pbeIterations);
+                SecretKey kek = EncryptUtils.bytesToAesKey(kekBytes);
+                // verify password by unwrapping DEK:
+                byte[] wrappedDek = Base64Utils.b64(enc.encryptedDekB64);
+                try {
+                    EncryptUtils.decrypt(wrappedDek, kek);
+                } catch (RuntimeException e) {
+                    status.setForeground(shell.getDisplay().getSystemColor(SWT.COLOR_RED));
+                    status.setText(i18n("vaultConfig.sync.err.wrongPassword"));
+                    return;
+                }
+                // decrypt S3 config if present:
+                VaultConfig.S3Config s3 = new VaultConfig.S3Config();
+                if (syncCfg.encryptedConfigJsonB64 != null && !syncCfg.encryptedConfigJsonB64.isBlank()) {
+                    try {
+                        byte[] encrypted = Base64Utils.b64(syncCfg.encryptedConfigJsonB64);
+                        byte[] decrypted = EncryptUtils.decrypt(encrypted, kek);
+                        s3 = JsonUtils.fromJson(new String(decrypted, StandardCharsets.UTF_8),
+                                VaultConfig.S3Config.class);
+                    } catch (RuntimeException e) {
+                        // corrupted config — start fresh
+                        s3 = new VaultConfig.S3Config();
+                    }
+                }
+                // populate fields:
+                endpointField.setText(s3.endpoint == null ? "" : s3.endpoint);
+                regionField.setText(s3.region == null ? "" : s3.region);
+                bucketField.setText(s3.bucket == null ? "" : s3.bucket);
+                accessIdField.setText(s3.accessId == null ? "" : s3.accessId);
+                accessSecretField.setText(s3.accessSecret == null ? "" : s3.accessSecret);
+                remotePathField.setText(s3.remotePath == null ? "" : s3.remotePath);
+                for (Text f : configFields)
+                    f.setEditable(true);
+                changeBtn.setVisible(false);
+                testBtn.setVisible(true);
+                saveBtn.setVisible(true);
+                btnRow.layout();
+                // stash kek for save:
+                saveBtn.setData(kek);
+            } finally {
+                Arrays.fill(password, '\0');
+            }
+        });
+
+        // ── Save button: encrypt and persist config ──────────────────
+        saveBtn.addListener(SWT.Selection, _ -> {
+            status.setText("");
+            SecretKey kek = (SecretKey) saveBtn.getData();
+            if (kek == null)
+                return;
+            VaultConfig.S3Config s3 = new VaultConfig.S3Config();
+            s3.endpoint = endpointField.getText().trim();
+            s3.region = regionField.getText().trim();
+            s3.bucket = bucketField.getText().trim();
+            s3.accessId = accessIdField.getText().trim();
+            s3.accessSecret = accessSecretField.getText().trim();
+            s3.remotePath = remotePathField.getText().trim();
+
+            byte[] json = JsonUtils.toJson(s3).getBytes(StandardCharsets.UTF_8);
+            byte[] encrypted = EncryptUtils.encrypt(json, kek);
+            syncCfg.encryptedConfigJsonB64 = Base64Utils.b64(encrypted);
+            if (syncCfg.type == null || syncCfg.type.isBlank()) {
+                syncCfg.type = "s3";
+            }
+            String err = controller.saveVaultConfig(vault);
+            if (err != null) {
+                status.setForeground(shell.getDisplay().getSystemColor(SWT.COLOR_RED));
+                status.setText(err);
+            } else {
+                status.setForeground(shell.getDisplay().getSystemColor(SWT.COLOR_DARK_GREEN));
+                status.setText(i18n("vaultConfig.sync.msg.saved"));
+            }
+        });
+
+        // ── Test Connection button (placeholder) ─────────────────────
+        testBtn.addListener(SWT.Selection, _ -> {
+            status.setForeground(shell.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
+            status.setText(i18n("vaultConfig.sync.msg.testing"));
+            // TODO: implement actual S3 connection test
+        });
 
         item.setControl(body);
     }

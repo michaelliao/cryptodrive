@@ -43,19 +43,25 @@ public class VaultConfig {
 
         public boolean enabled;
 
-        public String s3Provider;
+        public String type;
 
-        public String s3EndpointB64;
+        public String encryptedConfigJsonB64;
 
-        public String s3RegionB64;
+    }
 
-        public String s3BucketB64;
+    public static class S3Config {
 
-        public String s3AccessIdB64;
+        public String endpoint;
 
-        public String s3AccessSecretB64;
+        public String region;
 
-        public String s3RemotePathB64;
+        public String bucket;
+
+        public String accessId;
+
+        public String accessSecret;
+
+        public String remotePath;
 
     }
 
