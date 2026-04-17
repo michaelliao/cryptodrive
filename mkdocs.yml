@@ -3,7 +3,7 @@ theme:
   name: material
   logo: assets/images/logo.png
   palette:
-    primary: teal
+    primary: indigo
   features:
     - navigation.tabs
     - navigation.tabs.sticky
