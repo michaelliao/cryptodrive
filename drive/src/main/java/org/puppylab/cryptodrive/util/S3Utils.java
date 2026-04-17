@@ -24,4 +24,14 @@ public class S3Utils {
         return scb.build();
     }
 
+    public static String normalizeObjectPath(String key) {
+        while (key.startsWith("/")) {
+            key = key.substring(1);
+        }
+        while (key.endsWith("/")) {
+            key = key.substring(0, key.length() - 1);
+        }
+        return key;
+    }
+
 }

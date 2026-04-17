@@ -3,6 +3,7 @@ package org.puppylab.cryptodrive.ui.view.dialog;
 import static org.puppylab.cryptodrive.util.I18nUtils.i18n;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 
 import javax.crypto.SecretKey;
@@ -27,6 +28,15 @@ import org.puppylab.cryptodrive.util.Base64Utils;
 import org.puppylab.cryptodrive.util.EncryptUtils;
 import org.puppylab.cryptodrive.util.JsonUtils;
 import org.puppylab.cryptodrive.util.MountUtils;
+import org.puppylab.cryptodrive.util.S3Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 /**
  * Modal per-vault configuration dialog with three tabs: General, Sync,
@@ -34,6 +44,8 @@ import org.puppylab.cryptodrive.util.MountUtils;
  * Security tab has its own {@code Change Password} action button.
  */
 public class VaultConfigDialog {
+
+    final Logger logger = LoggerFactory.getLogger(getClass());
 
     private static final int MIN_PASSWORD_LEN = 8;
 
@@ -416,11 +428,55 @@ public class VaultConfigDialog {
             }
         });
 
-        // ── Test Connection button (placeholder) ─────────────────────
+        // ── Test Connection button ───────────────────────────────────
         testBtn.addListener(SWT.Selection, _ -> {
             status.setForeground(shell.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
             status.setText(i18n("vaultConfig.sync.msg.testing"));
-            // TODO: implement actual S3 connection test
+            body.layout();
+
+            VaultConfig.S3Config s3 = new VaultConfig.S3Config();
+            s3.endpoint = endpointField.getText().trim();
+            s3.region = regionField.getText().trim();
+            s3.bucket = bucketField.getText().trim();
+            s3.accessId = accessIdField.getText().trim();
+            s3.accessSecret = accessSecretField.getText().trim();
+            s3.remotePath = remotePathField.getText().trim();
+
+            Thread.ofVirtual().start(() -> {
+                try {
+                    String testKey = "__test__.tmp";
+                    if (s3.remotePath != null && !s3.remotePath.isEmpty()) {
+                        String prefix = S3Utils.normalizeObjectPath(s3.remotePath);
+                        testKey = prefix + "/" + testKey;
+                    }
+                    logger.info("testing s3 connection for key: {}", testKey);
+                    String content = "This file is generated at " + LocalDateTime.now().withNano(0).toString()
+                            + " and used for test.\nYou can safely delete this file.";
+                    try (S3Client client = S3Utils.createS3Client(s3)) {
+                        logger.info("test pub object...");
+                        client.putObject(PutObjectRequest.builder().bucket(s3.bucket).key(testKey).build(),
+                                RequestBody.fromString(content));
+                        logger.info("test get object...");
+                        client.getObject(GetObjectRequest.builder().bucket(s3.bucket).key(testKey).build()).close();
+                        logger.info("test delete object...");
+                        client.deleteObject(DeleteObjectRequest.builder().bucket(s3.bucket).key(testKey).build());
+                    }
+                    shell.getDisplay().asyncExec(() -> {
+                        if (status.isDisposed())
+                            return;
+                        status.setForeground(shell.getDisplay().getSystemColor(SWT.COLOR_DARK_GREEN));
+                        status.setText(i18n("vaultConfig.sync.msg.connectionOk"));
+                    });
+                } catch (Exception ex) {
+                    String msg = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+                    shell.getDisplay().asyncExec(() -> {
+                        if (status.isDisposed())
+                            return;
+                        status.setForeground(shell.getDisplay().getSystemColor(SWT.COLOR_RED));
+                        status.setText(i18n("vaultConfig.sync.msg.connectionFailed", msg));
+                    });
+                }
+            });
         });
 
         item.setControl(body);
