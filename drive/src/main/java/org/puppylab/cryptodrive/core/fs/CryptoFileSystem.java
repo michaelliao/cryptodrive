@@ -26,6 +26,7 @@ import org.cryptomator.jfuse.api.FuseOperations;
 import org.cryptomator.jfuse.api.Stat;
 import org.cryptomator.jfuse.api.Statvfs;
 import org.cryptomator.jfuse.api.TimeSpec;
+import org.puppylab.cryptodrive.core.Vault;
 import org.puppylab.cryptodrive.core.exception.CryptoFsException;
 import org.puppylab.cryptodrive.core.node.CryptoDir;
 import org.puppylab.cryptodrive.core.node.CryptoFile;
@@ -62,15 +63,17 @@ public class CryptoFileSystem implements FuseOperations {
     private final Errno     errno;
     private final SecretKey dek;
     private final FileStore fileStore;
+    private final Vault     vault;
 
     private final ConcurrentMap<Long, OpenFileHandle> openFiles     = new ConcurrentHashMap<>();
     private final AtomicLong                          fileHandleGen = new AtomicLong(1L);
 
-    public CryptoFileSystem(CryptoFs cfs, Errno errno) throws IOException {
+    public CryptoFileSystem(CryptoFs cfs, Errno errno, Vault vault) throws IOException {
         this.cfs = cfs;
         this.errno = errno;
         this.dek = cfs.getKey();
         this.fileStore = Files.getFileStore(cfs.getRootPath());
+        this.vault = vault;
     }
 
     @Override
@@ -192,6 +195,7 @@ public class CryptoFileSystem implements FuseOperations {
                 d.createdAt = d.updatedAt = d.accessedAt = now;
                 parent.updatedAt = now;
                 cfs.save();
+                queueMetaSync();
                 return 0;
             } catch (CryptoFsException e) {
                 return -errno.eexist();
@@ -220,6 +224,7 @@ public class CryptoFileSystem implements FuseOperations {
             parent.dirs.remove(d);
             parent.updatedAt = System.currentTimeMillis();
             cfs.save();
+            queueMetaSync();
             return 0;
         } catch (Exception e) {
             logger.error("rmdir {} failed", path, e);
@@ -313,10 +318,13 @@ public class CryptoFileSystem implements FuseOperations {
                         StandardOpenOption.WRITE);
                 CryptoFileUtils.writeHeader(ch, init.header());
                 long fh = fileHandleGen.getAndIncrement();
-                openFiles.put(fh, new OpenFileHandle(f.inode, ch, init.fek()));
+                var handle = new OpenFileHandle(f.inode, ch, init.fek());
+                handle.dirty = true;
+                openFiles.put(fh, handle);
                 fi.setFh(fh);
                 parent.updatedAt = System.currentTimeMillis();
                 cfs.save();
+                queueMetaSync();
                 logger.debug("create path={} inode={} fh={}", path, f.inode, fh);
                 return 0;
             } catch (FileAlreadyExistsException e) {
@@ -339,6 +347,10 @@ public class CryptoFileSystem implements FuseOperations {
                 return -errno.enoent();
             if (!(node instanceof CryptoFile f))
                 return -errno.eisdir();
+            boolean writable = (fi.getFlags() & 0x03) != 0; // O_WRONLY or O_RDWR
+            if (writable) {
+                vault.interruptSyncIfReading(FileUtils.inodeToPath(f.inode));
+            }
             Path pp = physicalPath(f.inode);
             FileChannel ch;
             SecretKey fek;
@@ -404,6 +416,7 @@ public class CryptoFileSystem implements FuseOperations {
         if (h == null)
             return -errno.ebadf();
         logger.debug("write fh={} inode={}", fi.getFh(), h.inode);
+        h.dirty = true;
         try {
             int toWrite = (int) size;
             int written = 0;
@@ -548,6 +561,9 @@ public class CryptoFileSystem implements FuseOperations {
             return -errno.ebadf();
         try {
             h.channel.close();
+            if (h.dirty) {
+                queueFileSync(h.inode);
+            }
             return 0;
         } catch (Exception e) {
             logger.error("release {} failed", path, e);
@@ -566,6 +582,8 @@ public class CryptoFileSystem implements FuseOperations {
             CryptoFile f = parent.findFile(name);
             if (f == null)
                 return -errno.enoent();
+            String relPath = FileUtils.inodeToPath(f.inode);
+            vault.interruptSyncIfReading(relPath);
             parent.files.remove(f);
             parent.updatedAt = System.currentTimeMillis();
             try {
@@ -574,6 +592,8 @@ public class CryptoFileSystem implements FuseOperations {
                 logger.warn("deleting blob for inode {} failed", f.inode, e);
             }
             cfs.save();
+            queueDeletedSync(relPath);
+            queueMetaSync();
             return 0;
         } catch (Exception e) {
             logger.error("unlink {} failed", path, e);
@@ -632,6 +652,7 @@ public class CryptoFileSystem implements FuseOperations {
             oldParent.updatedAt = now;
             newParent.updatedAt = now;
             cfs.save();
+            queueMetaSync();
             return 0;
         } catch (Exception e) {
             logger.error("rename {} -> {} failed", oldpath, newpath, e);
@@ -721,6 +742,20 @@ public class CryptoFileSystem implements FuseOperations {
         stat.birthTime().set(btime);
     }
 
+    // ─── sync helpers ──────────────────────────────────────────────────────
+
+    private void queueFileSync(int inode) {
+        vault.addChangedFileToQueue("updated", FileUtils.inodeToPath(inode), System.currentTimeMillis());
+    }
+
+    private void queueDeletedSync(String relativePath) {
+        vault.addChangedFileToQueue("deleted", relativePath, System.currentTimeMillis());
+    }
+
+    private void queueMetaSync() {
+        vault.addChangedFileToQueue("updated", "files.json", System.currentTimeMillis());
+    }
+
     // ─── state ─────────────────────────────────────────────────────────────
 
     /** State kept per open file descriptor. */
@@ -728,6 +763,7 @@ public class CryptoFileSystem implements FuseOperations {
         final int         inode;
         final FileChannel channel;
         final SecretKey   fek;
+        boolean           dirty;
 
         OpenFileHandle(int inode, FileChannel channel, SecretKey fek) {
             this.inode = inode;

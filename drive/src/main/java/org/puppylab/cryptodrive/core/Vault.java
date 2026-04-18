@@ -70,7 +70,10 @@ public class Vault {
     }
 
     public void addChangedFileToQueue(String action, String relativePath, long timestamp) {
-        this.queue.addToQueue(action, relativePath, timestamp);
+        VaultQueue q = this.queue;
+        if (q != null) {
+            q.addToQueue(action, relativePath, timestamp);
+        }
     }
 
     public void startSync(SyncThread sync) {

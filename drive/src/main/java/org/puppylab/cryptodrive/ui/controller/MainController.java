@@ -377,7 +377,7 @@ public class MainController {
         }
         try {
             CryptoFs cryptoFs = new CryptoFs(vault.getSecretKey(), vault.getPath());
-            CryptoFileSystem fs = new CryptoFileSystem(cryptoFs, Fuse.builder().errno());
+            CryptoFileSystem fs = new CryptoFileSystem(cryptoFs, Fuse.builder().errno(), vault);
             Fuse fuse = MountUtils.mount(letter, fs, vault.getName());
             mounts.put(vaultKey(vault), fuse);
             mountPoints.put(vaultKey(vault), letter);
