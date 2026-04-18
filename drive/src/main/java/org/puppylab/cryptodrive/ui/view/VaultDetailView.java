@@ -1,5 +1,7 @@
 package org.puppylab.cryptodrive.ui.view;
 
+import static org.puppylab.cryptodrive.util.I18nUtils.i18n;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
@@ -42,6 +44,8 @@ public class VaultDetailView {
 
     private static final int ICON_SIZE = 32;
 
+    private static final int SYNC_POLL_MS = 2000;
+
     private final Composite      root;
     private final Canvas         stateIcon;
     private final Label          nameLabel;
@@ -49,6 +53,9 @@ public class VaultDetailView {
     private final Button         primaryButton;
     private final Label          mountLabel;
     private final Button         secondaryButton;
+    private final Composite      syncRow;
+    private final Label          syncIcon;
+    private final Label          syncLabel;
     private final Font           nameFont;
     private final Font           bigFont;
     private final MainController controller;
@@ -139,7 +146,35 @@ public class VaultDetailView {
         secondaryButton.setLayoutData(sbData);
         secondaryButton.addListener(SWT.Selection, _ -> onSecondary());
 
+        // ── sync status row (bottom) ───────────────────────────────────────
+        syncRow = new Composite(root, SWT.NONE);
+        syncRow.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, false));
+        GridLayout syncLayout = new GridLayout(2, false);
+        syncLayout.marginWidth = 0;
+        syncLayout.marginHeight = 0;
+        syncLayout.horizontalSpacing = 6;
+        syncRow.setLayout(syncLayout);
+
+        syncIcon = new Label(syncRow, SWT.NONE);
+        syncIcon.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
+
+        syncLabel = new Label(syncRow, SWT.NONE);
+        syncLabel.setForeground(display.getSystemColor(SWT.COLOR_DARK_GRAY));
+        syncLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+        setVisible(syncRow, false);
+
+        // ── periodic sync status poll ──────────────────────────────────────
+        Runnable[] poll = new Runnable[1];
+        poll[0] = () -> {
+            if (root.isDisposed()) return;
+            updateSyncStatus();
+            display.timerExec(SYNC_POLL_MS, poll[0]);
+        };
+        display.timerExec(SYNC_POLL_MS, poll[0]);
+
         root.addListener(SWT.Dispose, _ -> {
+            display.timerExec(-1, poll[0]);
             nameFont.dispose();
             bigFont.dispose();
         });
@@ -193,7 +228,31 @@ public class VaultDetailView {
             setVisible(primaryButton, true);
             setVisible(secondaryButton, true);
         }
+        updateSyncStatus();
         stateIcon.redraw();
+        root.layout(true, true);
+    }
+
+    private void updateSyncStatus() {
+        if (root.isDisposed()) return;
+        if (current == null || current.isLocked() || !current.isSyncEnabled()) {
+            if (syncRow.isVisible()) {
+                setVisible(syncRow, false);
+                root.layout(true, true);
+            }
+            return;
+        }
+        int queueSize = current.getSyncQueueSize();
+        if (queueSize == 0) {
+            syncIcon.setImage(Icons.get("synced"));
+            syncLabel.setText(i18n("sync.status.synced"));
+        } else {
+            syncIcon.setImage(Icons.get("syncing"));
+            syncLabel.setText(i18n("sync.status.syncing", queueSize));
+        }
+        if (!syncRow.isVisible()) {
+            setVisible(syncRow, true);
+        }
         root.layout(true, true);
     }
 

@@ -69,6 +69,15 @@ public class Vault {
         }
     }
 
+    public boolean isSyncEnabled() {
+        return this.sync != null;
+    }
+
+    public int getSyncQueueSize() {
+        VaultQueue q = this.queue;
+        return q != null ? q.size() : 0;
+    }
+
     public void addChangedFileToQueue(String action, String relativePath, long timestamp) {
         VaultQueue q = this.queue;
         if (q != null) {

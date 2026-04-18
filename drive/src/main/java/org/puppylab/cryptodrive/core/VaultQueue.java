@@ -37,6 +37,10 @@ public class VaultQueue {
         return queue.removeFirst();
     }
 
+    public synchronized int size() {
+        return queue.size();
+    }
+
     /**
      * action: "updated", "deleted"
      * 
