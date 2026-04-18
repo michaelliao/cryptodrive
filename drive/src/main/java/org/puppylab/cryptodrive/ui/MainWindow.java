@@ -22,6 +22,7 @@ import org.puppylab.cryptodrive.ui.view.VaultDetailView;
 import org.puppylab.cryptodrive.ui.view.VaultListView;
 import org.puppylab.cryptodrive.util.HttpUtils;
 import org.puppylab.cryptodrive.util.I18nUtils;
+import org.puppylab.cryptodrive.util.ShellUtils;
 
 public class MainWindow {
 
@@ -108,15 +109,13 @@ public class MainWindow {
             Menu trayMenu = new Menu(shell, SWT.POP_UP);
             MenuItem openItem = new MenuItem(trayMenu, SWT.PUSH);
             openItem.setText(i18n("tray.open"));
-            openItem.addListener(SWT.Selection, _ -> {
-                shell.setVisible(true);
-                shell.forceActive();
-            });
+            openItem.addListener(SWT.Selection, _ -> ShellUtils.activate(shell));
             new MenuItem(trayMenu, SWT.SEPARATOR);
             MenuItem exitItem = new MenuItem(trayMenu, SWT.PUSH);
             exitItem.setText(i18n("tray.exit"));
             exitItem.addListener(SWT.Selection, _ -> shell.dispose());
 
+            trayItem.addListener(SWT.Selection, _ -> ShellUtils.activate(shell));
             trayItem.addListener(SWT.MenuDetect, _ -> trayMenu.setVisible(true));
 
             shell.addListener(SWT.Close, e -> {
@@ -130,8 +129,7 @@ public class MainWindow {
         // ── HTTP daemon (single-instance IPC) ────────────────────────────────
         daemon.setOnActivate(() -> display.asyncExec(() -> {
             if (!shell.isDisposed()) {
-                shell.setVisible(true);
-                shell.forceActive();
+                ShellUtils.activate(shell);
             }
         }));
         daemon.start();
