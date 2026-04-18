@@ -9,7 +9,23 @@ import java.util.List;
  */
 public class VaultQueue {
 
-    List<ChangedFile> queue = new ArrayList<>();
+    public List<ChangedFile> queue = new ArrayList<>();
+
+    public synchronized void addToQueue(String action, String path, long timestamp) {
+        this.queue.add(new ChangedFile(action, path, timestamp));
+    }
+
+    public synchronized ChangedFile fetchFirst() {
+        if (queue.isEmpty())
+            return null;
+        return queue.getFirst();
+    }
+
+    public synchronized ChangedFile removeFirst() {
+        if (queue.isEmpty())
+            return null;
+        return queue.removeFirst();
+    }
 
     /**
      * action: "updated", "deleted"

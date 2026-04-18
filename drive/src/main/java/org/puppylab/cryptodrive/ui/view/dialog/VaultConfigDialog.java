@@ -352,14 +352,14 @@ public class VaultConfigDialog {
             if (password == null)
                 return;
             try {
-                VaultConfig.EncryptionConfig enc = cfg.encryption;
+                VaultConfig.EncryptionConfig enc = vault.getConfig().encryption;
                 byte[] salt = Base64Utils.b64(enc.pbeSaltB64);
+                byte[] wrappedDek = Base64Utils.b64(enc.encryptedDekB64);
                 byte[] kekBytes = EncryptUtils.derivePbeKey(password, salt, enc.pbeIterations);
                 SecretKey kek = EncryptUtils.bytesToAesKey(kekBytes);
-                // verify password by unwrapping DEK:
-                byte[] wrappedDek = Base64Utils.b64(enc.encryptedDekB64);
+                byte[] dek;
                 try {
-                    EncryptUtils.decrypt(wrappedDek, kek);
+                    dek = EncryptUtils.decrypt(wrappedDek, kek);
                 } catch (RuntimeException e) {
                     status.setForeground(shell.getDisplay().getSystemColor(SWT.COLOR_RED));
                     status.setText(i18n("vaultConfig.sync.err.wrongPassword"));
@@ -370,7 +370,7 @@ public class VaultConfigDialog {
                 if (syncCfg.encryptedConfigJsonB64 != null && !syncCfg.encryptedConfigJsonB64.isBlank()) {
                     try {
                         byte[] encrypted = Base64Utils.b64(syncCfg.encryptedConfigJsonB64);
-                        byte[] decrypted = EncryptUtils.decrypt(encrypted, kek);
+                        byte[] decrypted = EncryptUtils.decrypt(encrypted, EncryptUtils.bytesToAesKey(dek));
                         s3 = JsonUtils.fromJson(new String(decrypted, StandardCharsets.UTF_8),
                                 VaultConfig.S3Config.class);
                     } catch (RuntimeException e) {
@@ -392,7 +392,7 @@ public class VaultConfigDialog {
                 saveBtn.setVisible(true);
                 btnRow.layout();
                 // stash kek for save:
-                saveBtn.setData(kek);
+                saveBtn.setData(dek);
             } finally {
                 Arrays.fill(password, '\0');
             }
@@ -401,8 +401,8 @@ public class VaultConfigDialog {
         // ── Save button: encrypt and persist config ──────────────────
         saveBtn.addListener(SWT.Selection, _ -> {
             status.setText("");
-            SecretKey kek = (SecretKey) saveBtn.getData();
-            if (kek == null)
+            SecretKey dek = (SecretKey) EncryptUtils.bytesToAesKey((byte[]) saveBtn.getData());
+            if (dek == null)
                 return;
             VaultConfig.S3Config s3 = new VaultConfig.S3Config();
             s3.endpoint = endpointField.getText().trim();
@@ -413,7 +413,7 @@ public class VaultConfigDialog {
             s3.remotePath = remotePathField.getText().trim();
 
             byte[] json = JsonUtils.toJson(s3).getBytes(StandardCharsets.UTF_8);
-            byte[] encrypted = EncryptUtils.encrypt(json, kek);
+            byte[] encrypted = EncryptUtils.encrypt(json, dek);
             syncCfg.encryptedConfigJsonB64 = Base64Utils.b64(encrypted);
             if (syncCfg.type == null || syncCfg.type.isBlank()) {
                 syncCfg.type = "s3";

@@ -12,8 +12,11 @@ import javax.crypto.SecretKey;
 
 import org.cryptomator.jfuse.api.Fuse;
 import org.puppylab.cryptodrive.core.AppSettings;
+import org.puppylab.cryptodrive.core.SyncThread;
 import org.puppylab.cryptodrive.core.Vault;
 import org.puppylab.cryptodrive.core.VaultConfig;
+import org.puppylab.cryptodrive.core.VaultConfig.S3Config;
+import org.puppylab.cryptodrive.core.VaultConfig.SyncConfig;
 import org.puppylab.cryptodrive.core.fs.CryptoFileSystem;
 import org.puppylab.cryptodrive.core.node.CryptoFs;
 import org.puppylab.cryptodrive.util.Base64Utils;
@@ -299,10 +302,28 @@ public class MainController {
                 return "Incorrect password.";
             }
             vault.unlock(EncryptUtils.bytesToAesKey(dek));
+            // get sync config info:
+            S3Config config = null;
+            SyncConfig syncConfig = vault.getConfig().syncConfig;
+            if (syncConfig != null && syncConfig.enabled) {
+                logger.info("init sync...");
+                byte[] encCfg = Base64Utils.b64(syncConfig.encryptedConfigJsonB64);
+                byte[] cfg = EncryptUtils.decrypt(encCfg, vault.getSecretKey());
+                config = switch (syncConfig.type.toLowerCase()) {
+                case "s3" -> JsonUtils.fromJson(cfg, S3Config.class);
+                default -> throw new IllegalArgumentException("Unsupported sync type: " + syncConfig.type);
+                };
+            }
             String mountErr = mountVault(vault);
             if (mountErr != null) {
                 vault.setLocked();
                 return mountErr;
+            }
+            if (config != null) {
+                // start sync thread and track in Vault:
+                logger.info("start sync...");
+                var syncThread = new SyncThread(vault, config);
+                vault.startSync(syncThread);
             }
             notifySelectedChanged();
             return null;
@@ -329,6 +350,7 @@ public class MainController {
             }
         }
         vault.setLocked();
+        vault.shutdownSync();
         notifySelectedChanged();
         return null;
     }

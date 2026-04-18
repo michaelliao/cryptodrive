@@ -32,6 +32,7 @@ import org.puppylab.cryptodrive.core.node.CryptoFile;
 import org.puppylab.cryptodrive.core.node.CryptoFs;
 import org.puppylab.cryptodrive.core.node.CryptoNode;
 import org.puppylab.cryptodrive.util.CryptoFileUtils;
+import org.puppylab.cryptodrive.util.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -687,11 +688,7 @@ public class CryptoFileSystem implements FuseOperations {
     }
 
     private Path physicalPath(int inode) {
-        int i3 = inode & 0xff;
-        int i2 = (inode >>> 8) & 0xff;
-        int i1 = (inode >>> 16) & 0xff;
-        return cfs.getRootPath().resolve(String.format("%02x", i1)).resolve(String.format("%02x", i2))
-                .resolve(String.format("%02x.c9e", i3));
+        return cfs.getRootPath().resolve(FileUtils.inodeToPath(inode));
     }
 
     private void fillDirStat(CryptoDir d, Stat stat) {

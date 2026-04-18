@@ -1,8 +1,13 @@
 package org.puppylab.cryptodrive.core;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import javax.crypto.SecretKey;
+
+import org.puppylab.cryptodrive.util.FileUtils;
+import org.puppylab.cryptodrive.util.JsonUtils;
 
 public class Vault {
 
@@ -11,6 +16,13 @@ public class Vault {
 
     // Keep secret key if vault unlocked:
     SecretKey secretKey = null;
+
+    // Queue for sync:
+    VaultQueue queue     = null;
+    Path       queueFile = null;
+
+    // Track sync thread if vault unlocked and sync enabled:
+    SyncThread sync = null;
 
     public Vault(Path path, VaultConfig config) {
         this.path = path;
@@ -45,4 +57,37 @@ public class Vault {
         return this.config;
     }
 
+    public void addChangedFileToQueue(String action, String relativePath, long timestamp) {
+        this.queue.addToQueue(action, relativePath, timestamp);
+    }
+
+    public void startSync(SyncThread sync) {
+        // init queue:
+        this.queueFile = this.path.resolve("sync.json");
+        if (Files.isRegularFile(this.queueFile)) {
+            this.queue = JsonUtils.fromJson(FileUtils.readString(this.queueFile), VaultQueue.class);
+        } else {
+            this.queue = new VaultQueue();
+            Map<Integer, Path> files = FileUtils.scanC9eFiles(this.path);
+            for (Integer inode : files.keySet()) {
+                String relativePath = FileUtils.inodeToPath(inode.intValue());
+                addChangedFileToQueue("updated", relativePath, //
+                        0 // last modified time: does not matter for first sync
+                );
+            }
+        }
+        // start thread:
+        this.sync = sync;
+        this.sync.start();
+    }
+
+    public void shutdownSync() {
+        if (this.sync != null) {
+            this.sync.shutdown();
+            this.sync = null;
+        }
+        if (this.queue != null) {
+            JsonUtils.writeJson(this.queue, this.queueFile);
+        }
+    }
 }
