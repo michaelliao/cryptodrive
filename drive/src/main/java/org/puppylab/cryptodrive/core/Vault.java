@@ -2,6 +2,7 @@ package org.puppylab.cryptodrive.core;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 import javax.crypto.SecretKey;
@@ -76,18 +77,27 @@ public class Vault {
                 );
             }
         }
+        // add vault.json and files.json because they may be changed after vault
+        // configuration changed:
+        for (String file : List.of("vault.json", "files.json")) {
+            addChangedFileToQueue("updated", file, FileUtils.getModifiedTime(this.path.resolve(file)));
+        }
         // start thread:
         this.sync = sync;
         this.sync.start();
     }
 
     public void shutdownSync() {
+        // shutdown thread:
         if (this.sync != null) {
             this.sync.shutdown();
             this.sync = null;
         }
+        // shutdown queue:
         if (this.queue != null) {
             JsonUtils.writeJson(this.queue, this.queueFile);
+            this.queue = null;
         }
+        this.queueFile = null;
     }
 }

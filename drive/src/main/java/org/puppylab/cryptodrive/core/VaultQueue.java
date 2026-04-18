@@ -11,8 +11,12 @@ public class VaultQueue {
 
     public List<ChangedFile> queue = new ArrayList<>();
 
-    public synchronized void addToQueue(String action, String path, long timestamp) {
+    public void addToQueue(String action, String path, long timestamp) {
         this.queue.add(new ChangedFile(action, path, timestamp));
+    }
+
+    public synchronized void addToQueue(ChangedFile cf) {
+        this.queue.add(cf);
     }
 
     public synchronized ChangedFile fetchFirst() {

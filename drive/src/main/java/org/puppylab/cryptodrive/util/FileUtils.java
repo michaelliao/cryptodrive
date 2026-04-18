@@ -167,4 +167,12 @@ public class FileUtils {
         }
         return result;
     }
+
+    public static long getModifiedTime(Path path) {
+        try {
+            return Files.getLastModifiedTime(path).toMillis();
+        } catch (IOException e) {
+            return 0;
+        }
+    }
 }
