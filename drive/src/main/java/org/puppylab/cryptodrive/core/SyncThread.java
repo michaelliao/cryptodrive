@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
@@ -59,8 +60,9 @@ public class SyncThread extends Thread {
             while (running) {
                 ChangedFile cf = queue.fetchFirst();
                 if (cf == null) {
+                    logger.info("all synced.");
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(5000);
                     } catch (InterruptedException e) {
                         break;
                     }
@@ -108,13 +110,18 @@ public class SyncThread extends Thread {
                 // strip prefix to get relative path:
                 String relPath = obj.key();
                 if (!prefix.isEmpty() && relPath.startsWith(prefix)) {
-                    relPath = relPath.substring(prefix.length());
+                    relPath = relPath.substring(prefix.length() + 1);
                 }
                 if (shouldSync(relPath)) {
                     // eTag is typically "\"md5hex\"" — strip quotes:
                     String eTag = obj.eTag();
                     if (eTag != null) {
                         eTag = eTag.replace("\"", "");
+                        // MD5 hex is 32 chars, base64 is 24 — normalize to base64:
+                        if (eTag.length() == 32) {
+                            byte[] bytes = HexFormat.of().parseHex(eTag);
+                            eTag = BinaryUtils.toBase64(bytes);
+                        }
                     }
                     map.put(relPath, eTag);
                 }
@@ -201,9 +208,10 @@ public class SyncThread extends Thread {
         try {
             String remoteMD5 = metaMap.get(cf.path());
             if (remoteMD5 != null && remoteMD5.equals(localMD5)) {
-                logger.info("sync: skip upload (md5 unchanged): {}", cf.path());
+                logger.info("sync: skip upload (md5 unchanged: {}): {}", remoteMD5, cf.path());
                 return true;
             }
+            logger.info("sync: local {} (md5: {}) => remote: {} (md5: {})", cf.path(), localMD5, key, remoteMD5);
             s3.putObject(PutObjectRequest.builder().bucket(syncConfig.bucket).key(key).contentMD5(localMD5).build(),
                     tmpFile);
             metaMap.put(cf.path(), localMD5);

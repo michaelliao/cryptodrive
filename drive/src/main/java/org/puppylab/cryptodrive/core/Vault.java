@@ -59,8 +59,8 @@ public class Vault {
     }
 
     /**
-     * Interrupt the sync thread if it is currently reading the given file.
-     * Called from FUSE write/delete paths so user operations are never blocked.
+     * Interrupt the sync thread if it is currently reading the given file. Called
+     * from FUSE write/delete paths so user operations are never blocked.
      */
     public void interruptSyncIfReading(String relativePath) {
         SyncThread s = this.sync;
