@@ -35,7 +35,7 @@ encrypted.
 Vault directories contain nothing but ciphertext blobs and a small metadata
 file. Point Dropbox, Google Drive, OneDrive, iCloud, or any S3-compatible
 bucket at the vault folder and sync without ever uploading plaintext. Built-in
-connectors for Google Drive and OneDrive via OAuth + PKCE are included.
+connectors for any S3-compatible are included.
 
 ### Encrypted file names and folder structure
 
