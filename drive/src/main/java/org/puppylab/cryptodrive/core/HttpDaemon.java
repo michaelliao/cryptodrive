@@ -24,6 +24,7 @@ public class HttpDaemon implements HttpHandler {
     final Logger logger = LoggerFactory.getLogger(getClass());
 
     private HttpServer httpServer;
+    private Runnable   onActivate;
 
     /**
      * Binds the server socket. Call on the main thread before {@link #start()}.
@@ -47,6 +48,11 @@ public class HttpDaemon implements HttpHandler {
      */
     public void start() {
         this.httpServer.start();
+    }
+
+    /** Set the callback invoked when another instance sends {@code POST /activate}. */
+    public void setOnActivate(Runnable onActivate) {
+        this.onActivate = onActivate;
     }
 
     /** Called by MainWindow when the SWT shell is disposed. */
@@ -94,11 +100,15 @@ public class HttpDaemon implements HttpHandler {
 
     private void processHttp(HttpExchange exchange, String method, String path, String query, String body)
             throws IOException {
-        Object resp = "Hello world";
-        // serialize to json:
-        String json = JsonUtils.toJson(resp);
-        logger.info("json response: {}", json);
-        sendResponse(exchange, "application/json", json);
+        if ("POST".equals(method) && "/activate".equals(path)) {
+            logger.info("received /activate from another instance");
+            if (onActivate != null) {
+                onActivate.run();
+            }
+            sendResponse(exchange, "application/json", "\"ok\"");
+            return;
+        }
+        sendResponse(exchange, "application/json", JsonUtils.toJson("Hello world"));
     }
 
     private void sendResponse(HttpExchange exchange, String contentType, String content) throws IOException {

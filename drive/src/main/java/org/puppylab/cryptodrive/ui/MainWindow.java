@@ -14,11 +14,13 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tray;
 import org.eclipse.swt.widgets.TrayItem;
+import org.puppylab.cryptodrive.core.HttpDaemon;
 import org.puppylab.cryptodrive.ui.controller.MainController;
 import org.puppylab.cryptodrive.ui.view.EmptyView;
 import org.puppylab.cryptodrive.ui.view.ToolbarView;
 import org.puppylab.cryptodrive.ui.view.VaultDetailView;
 import org.puppylab.cryptodrive.ui.view.VaultListView;
+import org.puppylab.cryptodrive.util.HttpUtils;
 import org.puppylab.cryptodrive.util.I18nUtils;
 
 public class MainWindow {
@@ -30,6 +32,18 @@ public class MainWindow {
     }
 
     public void open() {
+        // ── single-instance guard ───────────────────────────────────────────
+        HttpDaemon daemon = new HttpDaemon();
+        if (!daemon.listen()) {
+            // Another instance is running — activate it and exit.
+            try {
+                HttpUtils.postJson("http://127.0.0.1:" + HttpDaemon.PORT + "/activate", "", null);
+            } catch (Exception ignored) {
+                // best-effort
+            }
+            return;
+        }
+
         Display display = new Display();
         I18nUtils.init("");
 
@@ -112,6 +126,16 @@ public class MainWindow {
                 }
             });
         }
+
+        // ── HTTP daemon (single-instance IPC) ────────────────────────────────
+        daemon.setOnActivate(() -> display.asyncExec(() -> {
+            if (!shell.isDisposed()) {
+                shell.setVisible(true);
+                shell.forceActive();
+            }
+        }));
+        daemon.start();
+        shell.addListener(SWT.Dispose, _ -> daemon.stop());
 
         // ── event loop ───────────────────────────────────────────────────────
         shell.open();
