@@ -1,10 +1,13 @@
 package org.puppylab.cryptodrive.core;
 
-import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.DigestOutputStream;
+import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 import org.puppylab.cryptodrive.core.VaultConfig.S3Config;
@@ -21,7 +24,6 @@ import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.utils.BinaryUtils;
-import software.amazon.awssdk.utils.Md5Utils;
 
 public class SyncThread extends Thread {
 
@@ -33,7 +35,9 @@ public class SyncThread extends Thread {
     final Vault    vault;
     final S3Config syncConfig;
 
-    volatile boolean running = true;
+    volatile boolean            running     = true;
+    volatile String             syncingPath = null;
+    private final ReentrantLock syncLock    = new ReentrantLock();
 
     public SyncThread(Vault vault, S3Config syncConfig) {
         super("sync-" + vault.getName());
@@ -120,49 +124,119 @@ public class SyncThread extends Thread {
         return map;
     }
 
+    /**
+     * Called from FUSE threads before writing or deleting a file. If the sync
+     * thread is currently reading the same local file, interrupt it and wait until
+     * the file is closed. Returns quickly if no conflict.
+     *
+     * <p>
+     * {@code syncLock} is held by the sync thread only during the local file read
+     * (NIO {@code FileChannel} — responds to {@code Thread.interrupt()} with
+     * {@code ClosedByInterruptException}). The subsequent S3 network call runs
+     * outside the lock so this method never waits on network I/O.
+     * </p>
+     */
+    public void interruptIfSyncing(String relativePath) {
+        if (!relativePath.equals(syncingPath)) {
+            return;
+        }
+        logger.info("sync: interrupting read of {} for user write/delete", relativePath);
+        this.interrupt();
+        // block until the sync thread releases the local file:
+        syncLock.lock();
+        syncLock.unlock();
+    }
+
     private boolean processEntry(S3Client s3, ChangedFile cf, String prefix, Map<String, String> metaMap) {
         String key = remoteKey(prefix, cf.path());
         logger.info("sync {} file {} to {}...", cf.action(), cf.path(), key);
         switch (cf.action().toLowerCase()) {
         case "updated" -> {
-            Path localFile = vault.getPath().resolve(cf.path());
+            return processUpdated(s3, cf, key, metaMap);
+        }
+        case "deleted" -> {
+            return processDeleted(s3, cf, key, metaMap);
+        }
+        default -> {
+            logger.warn("sync: unknown action '{}' for {}", cf.action(), cf.path());
+            return false;
+        }
+        }
+    }
+
+    private boolean processUpdated(S3Client s3, ChangedFile cf, String key, Map<String, String> metaMap) {
+        Path localFile = vault.getPath().resolve(cf.path());
+        Path tmpFile = vault.getPath().resolve("upload.tmp");
+        // ── phase 1: copy to temp file under lock (interruptible via NIO) ──
+        // Both read and write use FileChannel, so Thread.interrupt() causes
+        // ClosedByInterruptException immediately — the FUSE thread never waits
+        // longer than one buffer cycle.
+        String localMD5;
+        syncLock.lock();
+        try {
+            syncingPath = cf.path();
             if (!Files.isRegularFile(localFile)) {
                 logger.warn("sync: local file missing, skip upload: {}", cf.path());
                 return false;
             }
-            // IMPORTANT: use AWS SDK to calculate MD5:
-            byte[] md5Bytes;
-            try (var input = Files.newInputStream(localFile)) {
-                md5Bytes = Md5Utils.computeMD5Hash(input);
-            } catch (IOException e) {
-                logger.warn("sync: read local file failed: {}", cf.path());
-                return false;
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            try (InputStream in = Files.newInputStream(localFile);
+                    DigestOutputStream out = new DigestOutputStream(Files.newOutputStream(tmpFile), md5)) {
+                in.transferTo(out);
             }
-            String localMD5 = BinaryUtils.toBase64(md5Bytes);
+            localMD5 = BinaryUtils.toBase64(md5.digest());
+        } catch (Exception e) {
+            deleteTmpQuietly(tmpFile);
+            if (Thread.interrupted()) {
+                logger.info("sync: interrupted reading {}, will sync after user write", cf.path());
+                return true;
+            }
+            logger.warn("sync: failed reading {}: {}", cf.path(), e.getMessage());
+            return false;
+        } finally {
+            syncingPath = null;
+            syncLock.unlock();
+        }
+        // ── phase 2: upload temp file to S3 (no lock, no source file handle) ──
+        try {
             String remoteMD5 = metaMap.get(cf.path());
             if (remoteMD5 != null && remoteMD5.equals(localMD5)) {
                 logger.info("sync: skip upload (md5 unchanged): {}", cf.path());
                 return true;
             }
             s3.putObject(PutObjectRequest.builder().bucket(syncConfig.bucket).key(key).contentMD5(localMD5).build(),
-                    localFile);
+                    tmpFile);
             metaMap.put(cf.path(), localMD5);
             return true;
+        } catch (Exception e) {
+            logger.warn("sync: upload failed for {}: {}", cf.path(), e.getMessage());
+            return false;
+        } finally {
+            deleteTmpQuietly(tmpFile);
         }
-        case "deleted" -> {
-            String remoteMD5 = metaMap.get(cf.path());
-            if (remoteMD5 == null) {
-                logger.info("sync: skip delete (not on remote): {}", cf.path());
-                return true;
-            }
+    }
+
+    private void deleteTmpQuietly(Path tmp) {
+        try {
+            Files.deleteIfExists(tmp);
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
+    private boolean processDeleted(S3Client s3, ChangedFile cf, String key, Map<String, String> metaMap) {
+        String remoteMD5 = metaMap.get(cf.path());
+        if (remoteMD5 == null) {
+            logger.info("sync: skip delete (not on remote): {}", cf.path());
+            return true;
+        }
+        try {
             s3.deleteObject(DeleteObjectRequest.builder().bucket(syncConfig.bucket).key(key).build());
             metaMap.remove(cf.path());
             return true;
-        }
-        default -> {
-            logger.warn("sync: unknown action '{}' for {}", cf.action(), cf.path());
+        } catch (Exception e) {
+            logger.warn("sync: delete failed for {}: {}", cf.path(), e.getMessage());
             return false;
-        }
         }
     }
 

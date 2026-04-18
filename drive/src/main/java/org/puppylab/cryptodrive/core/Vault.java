@@ -58,6 +58,17 @@ public class Vault {
         return this.config;
     }
 
+    /**
+     * Interrupt the sync thread if it is currently reading the given file.
+     * Called from FUSE write/delete paths so user operations are never blocked.
+     */
+    public void interruptSyncIfReading(String relativePath) {
+        SyncThread s = this.sync;
+        if (s != null) {
+            s.interruptIfSyncing(relativePath);
+        }
+    }
+
     public void addChangedFileToQueue(String action, String relativePath, long timestamp) {
         this.queue.addToQueue(action, relativePath, timestamp);
     }
