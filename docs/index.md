@@ -5,6 +5,8 @@ that appears as a regular drive in your file manager. Everything you save into i
 is transparently encrypted before it touches disk — drag, drop, edit, and open
 files like usual, while only ciphertext ever leaves your machine.
 
+![app](assets/images/app.png)
+
 ## Download
 
 Pre-compiled release can be downloaded from [GitHub](https://github.com/michaelliao/cryptodrive/releases/latest). Source code can also be get from [GitHub](https://github.com/michaelliao/cryptodrive).
@@ -18,6 +20,8 @@ drive (for example `X:\` on Windows, `/Volumes/MyVault` on macOS, a mount point
 on Linux). Any application — editors, IDEs, media players, backup tools — can
 read and write files through the drive with zero awareness that the storage is
 encrypted.
+
+![drive](assets/images/drive.png)
 
 ### Strong, modern cryptography
 
