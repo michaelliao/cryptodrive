@@ -475,6 +475,7 @@ Temporary Items
 
 # custom gitignore:
 .*
+CLAUDE.md
 !.github
 !.gitignore
 !.gitsubmodules
