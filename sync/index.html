@@ -1,0 +1,897 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../security/">
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.0">
+    
+    
+      
+        <title>Sync - Crypto Drive</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.45e1311d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#sync" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Crypto Drive" class="md-header__button md-logo" aria-label="Crypto Drive" data-md-component="logo">
+      
+  <img src="../assets/images/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Crypto Drive
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Sync
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../guide/" class="md-tabs__link">
+        
+  
+    
+  
+  Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../security/" class="md-tabs__link">
+        
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+    
+  
+  Sync
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Crypto Drive" class="md-nav__button md-logo" aria-label="Crypto Drive" data-md-component="logo">
+      
+  <img src="../assets/images/logo.png" alt="logo">
+
+    </a>
+    Crypto Drive
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Sync
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Sync
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-synced" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is synced
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lifecycle
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Lifecycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unlock-start-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unlock (start sync)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lock-stop-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lock (stop sync)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sync-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sync queue
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sync queue">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#deduplication" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deduplication
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fuse-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      FUSE integration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upload-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Upload process
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Upload process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#startup-fetch-remote-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      Startup: fetch remote metadata
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#processing-an-updated-entry" class="md-nav__link">
+    <span class="md-ellipsis">
+      Processing an "updated" entry
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#processing-a-deleted-entry" class="md-nav__link">
+    <span class="md-ellipsis">
+      Processing a "deleted" entry
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failure-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Failure handling
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#concurrency-fuse-vs-sync-thread" class="md-nav__link">
+    <span class="md-ellipsis">
+      Concurrency: FUSE vs. sync thread
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Concurrency: FUSE vs. sync thread">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-interrupt-on-conflict" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Interrupt on conflict
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-temp-file-isolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Temp file isolation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sequence-diagram" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sequence diagram
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#status-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      Status display
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="sync">Sync</h1>
+<p>CryptoDrive can sync an unlocked vault to any S3-compatible cloud storage.
+Sync is <strong>one-way: local to cloud only</strong>. Changes made in the cloud are not
+pulled back to the local vault.</p>
+<p>Because everything synced is already encrypted (ciphertext <code>.c9e</code> blobs,
+encrypted <code>files.json</code>, and <code>vault.json</code> with a wrapped DEK), the cloud
+provider never sees plaintext file names or contents.</p>
+<h2 id="configuration">Configuration</h2>
+<p>Sync is configured per vault in the <strong>Sync</strong> tab of the vault configuration
+dialog. The S3 credentials (endpoint, region, bucket, access ID, secret, and
+remote path) are encrypted with the vault's DEK and stored in <code>vault.json</code> as
+<code>syncConfig.encryptedConfigJsonB64</code>. This means:</p>
+<ul>
+<li>The S3 credentials survive a password change (the DEK doesn't change).</li>
+<li>An attacker who obtains the vault directory cannot read the S3 credentials
+  without the master password.</li>
+</ul>
+<p>Use <strong>Test Connection</strong> to verify that the credentials are correct before
+saving. The test uploads a small <code>__test__.tmp</code> file to the configured bucket
+and reads it back.</p>
+<h2 id="what-is-synced">What is synced</h2>
+<p>Only vault files are synced:</p>
+<table>
+<thead>
+<tr>
+<th>File pattern</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;xx&gt;/&lt;yy&gt;/&lt;zz&gt;.c9e</code></td>
+<td>Encrypted file blobs (ciphertext)</td>
+</tr>
+<tr>
+<td><code>files.json</code></td>
+<td>Encrypted virtual directory tree</td>
+</tr>
+<tr>
+<td><code>vault.json</code></td>
+<td>KDF parameters and wrapped DEK</td>
+</tr>
+</tbody>
+</table>
+<p>All other files in the vault directory (e.g. <code>sync.json</code>, <code>upload.tmp</code>) are
+local-only and never uploaded.</p>
+<p>Files are stored under a configurable <strong>remote path</strong> prefix in the S3
+bucket. For example, if the remote path is <code>backup/my-vault</code>, a file with
+inode <code>9001</code> is uploaded to <code>backup/my-vault/00/23/29.c9e</code>.</p>
+<h2 id="lifecycle">Lifecycle</h2>
+<h3 id="unlock-start-sync">Unlock (start sync)</h3>
+<p>When a vault with sync enabled is unlocked:</p>
+<ol>
+<li>The encrypted S3 config is decrypted with the DEK.</li>
+<li>The sync queue (<code>sync.json</code>) is loaded from disk. If <code>sync.json</code> does not
+   exist (first sync), every <code>.c9e</code> blob in the vault is added to the queue
+   as <code>"updated"</code>, triggering a full upload.</li>
+<li><code>vault.json</code> and <code>files.json</code> are always added to the queue, since they
+   may have changed while the vault was locked (e.g. password change, config
+   edit).</li>
+<li>A background <code>SyncThread</code> is started. It creates an S3 client and begins
+   processing the queue.</li>
+</ol>
+<h3 id="lock-stop-sync">Lock (stop sync)</h3>
+<p>When the vault is locked:</p>
+<ol>
+<li>The sync thread is interrupted and joined (waits for it to stop).</li>
+<li>The remaining queue is persisted to <code>sync.json</code> so progress is not lost.</li>
+<li>On next unlock, the queue picks up where it left off.</li>
+</ol>
+<h2 id="sync-queue">Sync queue</h2>
+<p>The queue is an ordered list of pending changes, persisted as
+<code>&lt;vault&gt;/sync.json</code>:</p>
+<pre><code class="language-json">{
+    &quot;queue&quot;: [
+        {
+            &quot;action&quot;: &quot;updated&quot;,
+            &quot;path&quot;: &quot;00/0f/a5.c9e&quot;,
+            &quot;timestamp&quot;: 123455000
+        },
+        {
+            &quot;action&quot;: &quot;deleted&quot;,
+            &quot;path&quot;: &quot;00/9c/4f.c9e&quot;,
+            &quot;timestamp&quot;: 123456000
+        }
+    ]
+}
+</code></pre>
+<ul>
+<li><code>action</code> — <code>"updated"</code> (file created or modified) or <code>"deleted"</code> (file
+  removed).</li>
+<li><code>path</code> — relative ciphertext path within the vault (e.g. <code>00/0f/a5.c9e</code>
+  or <code>files.json</code>).</li>
+<li><code>timestamp</code> — epoch millis when the change occurred.</li>
+</ul>
+<h3 id="deduplication">Deduplication</h3>
+<p>If a file is already in the queue and a new change arrives for the same
+path, the existing entry is <strong>replaced in place</strong> (same queue position, new
+action and timestamp). This prevents the queue from growing unboundedly when
+a file is written repeatedly.</p>
+<h3 id="fuse-integration">FUSE integration</h3>
+<p>The FUSE filesystem automatically feeds the queue:</p>
+<table>
+<thead>
+<tr>
+<th>FUSE operation</th>
+<th>Queue entries added</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>create</code> (new file)</td>
+<td><code>files.json</code> queued; file queued on release</td>
+</tr>
+<tr>
+<td><code>write</code></td>
+<td>File marked dirty; queued on <code>release</code></td>
+</tr>
+<tr>
+<td><code>unlink</code> (delete file)</td>
+<td><code>"deleted"</code> for the <code>.c9e</code> blob + <code>files.json</code></td>
+</tr>
+<tr>
+<td><code>mkdir</code></td>
+<td><code>files.json</code></td>
+</tr>
+<tr>
+<td><code>rmdir</code></td>
+<td><code>files.json</code></td>
+</tr>
+<tr>
+<td><code>rename</code> (file or dir)</td>
+<td><code>files.json</code></td>
+</tr>
+</tbody>
+</table>
+<p>File changes are only queued when the file handle is <strong>released</strong> (closed),
+not on every individual write call.</p>
+<h2 id="upload-process">Upload process</h2>
+<p>The sync thread processes the queue one entry at a time.</p>
+<h3 id="startup-fetch-remote-metadata">Startup: fetch remote metadata</h3>
+<p>Before processing any queue entries, the sync thread lists all objects in
+the remote bucket under the configured prefix. For each object matching the
+vault file pattern, it records the S3 <strong>eTag</strong> (MD5). This metadata map is
+kept in memory for the duration of the sync session.</p>
+<p>Some S3 providers return the eTag as hex (32 characters), others as base64
+(24 characters). The sync thread normalizes hex eTags to base64 for
+consistent comparison.</p>
+<h3 id="processing-an-updated-entry">Processing an <code>"updated"</code> entry</h3>
+<p>Upload happens in two phases to avoid blocking user operations:</p>
+<p><strong>Phase 1 — local file read (under lock)</strong></p>
+<ol>
+<li>Acquire <code>syncLock</code>.</li>
+<li>Set <code>syncingPath</code> to the current file so the FUSE layer can detect
+   conflicts.</li>
+<li>Copy the source <code>.c9e</code> file to a temporary <code>upload.tmp</code>, computing the
+   MD5 digest during the copy using a <code>DigestOutputStream</code>.</li>
+<li>Release <code>syncLock</code> and clear <code>syncingPath</code>.</li>
+</ol>
+<p>Both read and write use NIO <code>FileChannel</code>, so <code>Thread.interrupt()</code> from the
+FUSE layer causes an immediate <code>ClosedByInterruptException</code> — the user's
+write is never blocked for more than one buffer cycle.</p>
+<p>If interrupted, the temp file is cleaned up and the entry is removed from
+the queue (the FUSE write will re-queue it with fresh content).</p>
+<p><strong>Phase 2 — S3 upload (no lock)</strong></p>
+<ol>
+<li>Compare the local MD5 against the cached remote MD5. If they match, skip
+   the upload.</li>
+<li>Upload <code>upload.tmp</code> to S3 with <code>Content-MD5</code> set for integrity
+   verification.</li>
+<li>Update the in-memory metadata map with the new MD5.</li>
+<li>Delete <code>upload.tmp</code>.</li>
+</ol>
+<p>Because phase 2 operates on the temp file (not the original), the source
+file is free for FUSE writes during the entire upload.</p>
+<h3 id="processing-a-deleted-entry">Processing a <code>"deleted"</code> entry</h3>
+<ol>
+<li>Check the metadata map. If the file is not on the remote, skip.</li>
+<li>Send a <code>DeleteObject</code> request to S3.</li>
+<li>Remove the entry from the metadata map.</li>
+</ol>
+<h3 id="failure-handling">Failure handling</h3>
+<ul>
+<li>If an entry fails to process, it is moved to the <strong>back of the queue</strong> so
+  other entries can proceed. The thread backs off for 5 seconds before
+  retrying.</li>
+<li>After each successful or skipped entry, <code>sync.json</code> is rewritten to disk
+  so progress survives a crash.</li>
+<li>When the queue is empty, the thread polls every 5 seconds for new entries.</li>
+</ul>
+<h2 id="concurrency-fuse-vs-sync-thread">Concurrency: FUSE vs. sync thread</h2>
+<p>The sync thread only reads local files; the user writes and deletes through
+FUSE. Two mechanisms ensure user operations are never blocked:</p>
+<h3 id="1-interrupt-on-conflict">1. Interrupt on conflict</h3>
+<p>When the FUSE layer opens a file for writing or deletes a file, it calls
+<code>vault.interruptSyncIfReading(relativePath)</code>. This checks the sync thread's
+<code>syncingPath</code>:</p>
+<ul>
+<li><strong>No conflict:</strong> returns immediately (no lock overhead).</li>
+<li><strong>Conflict:</strong> calls <code>Thread.interrupt()</code> on the sync thread, then acquires
+  <code>syncLock</code> to wait until the sync thread has closed the file. The wait is
+  bounded by the local file read — never by the S3 network call, which runs
+  outside the lock.</li>
+</ul>
+<h3 id="2-temp-file-isolation">2. Temp file isolation</h3>
+<p>The S3 upload reads from <code>upload.tmp</code>, not the source file. Even if the
+upload takes seconds, the source file is free for user writes. The next sync
+cycle will pick up the new content.</p>
+<h3 id="sequence-diagram">Sequence diagram</h3>
+<pre><code>FUSE thread                  Sync thread
+    │                            │
+    │                     syncLock.lock()
+    │                     syncingPath = &quot;00/23/29.c9e&quot;
+    │                     copy file → upload.tmp (+ MD5)
+    │                            │
+    ├─ open(&quot;00/23/29.c9e&quot;, WRITE)
+    ├─ interruptIfSyncing()      │
+    │   ├─ interrupt() ──────────┤ ← ClosedByInterruptException
+    │   └─ syncLock.lock()       │   syncingPath = null
+    │      (waits)               │   syncLock.unlock()
+    │   syncLock.unlock() ◄──────┤
+    │   (returns)                │
+    ├─ write data                │
+    ├─ close                     │
+    │   └─ queue &quot;updated&quot;       │
+    │                     ...poll queue...
+    │                     copy file → upload.tmp (new content)
+    │                     upload upload.tmp to S3
+</code></pre>
+<h2 id="status-display">Status display</h2>
+<p>When a vault is unlocked with sync enabled, the detail view shows a live
+sync status at the bottom:</p>
+<ul>
+<li><strong>All synced:</strong> "All files in vault have been synchronized." (with a
+  synced icon)</li>
+<li><strong>In progress:</strong> "Synchronizing <em>N</em> files..." (with a syncing icon)</li>
+</ul>
+<p>The status polls every 2 seconds.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      <p>Crypto Drive copyright &copy; 2026. <a href="https://github.com/michaelliao/cryptodrive/releases/latest">Download</a> | <a href="https://github.com/michaelliao/cryptodrive">GitHub</a></p>
+
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "toc.follow", "toc.integrate", "navigation.top"], "search": "../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7c377c4.min.js"></script>
+      
+    
+  </body>
+</html>

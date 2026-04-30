@@ -1,0 +1,937 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../guide/">
+      
+      
+        <link rel="next" href="../sync/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.0">
+    
+    
+      
+        <title>Security - Crypto Drive</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.45e1311d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#security" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Crypto Drive" class="md-header__button md-logo" aria-label="Crypto Drive" data-md-component="logo">
+      
+  <img src="../assets/images/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Crypto Drive
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Security
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../guide/" class="md-tabs__link">
+        
+  
+    
+  
+  Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../sync/" class="md-tabs__link">
+        
+  
+    
+  
+  Sync
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Crypto Drive" class="md-nav__button md-logo" aria-label="Crypto Drive" data-md-component="logo">
+      
+  <img src="../assets/images/logo.png" alt="logo">
+
+    </a>
+    Crypto Drive
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Security
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Security
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#threat-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Threat model
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cryptographic-primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cryptographic primitives
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key hierarchy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key hierarchy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kek-key-encryption-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      KEK — Key Encryption Key
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dek-data-encryption-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      DEK — Data Encryption Key
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fek-file-encryption-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      FEK — File Encryption Key
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vault-layout-on-disk" class="md-nav__link">
+    <span class="md-ellipsis">
+      Vault layout on disk
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Vault layout on disk">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vaultjson" class="md-nav__link">
+    <span class="md-ellipsis">
+      vault.json
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filesjson" class="md-nav__link">
+    <span class="md-ellipsis">
+      files.json
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#byte2byte1byte0c9e" class="md-nav__link">
+    <span class="md-ellipsis">
+      &lt;byte2&gt;/&lt;byte1&gt;/&lt;byte0&gt;.c9e
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-and-directory-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      File and directory model
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File and directory model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inode-ranges" class="md-nav__link">
+    <span class="md-ellipsis">
+      Inode ranges
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#path-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Path resolution
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metadata-vs-blob-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadata vs. blob operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#startup-and-lostfound" class="md-nav__link">
+    <span class="md-ellipsis">
+      Startup and lost+found
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#encryption-file-format-c9e" class="md-nav__link">
+    <span class="md-ellipsis">
+      Encryption file format (.c9e)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Encryption file format (.c9e)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#64-byte-header" class="md-nav__link">
+    <span class="md-ellipsis">
+      64-byte header
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#encrypted-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      Encrypted block
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#partial-writes-and-reads" class="md-nav__link">
+    <span class="md-ellipsis">
+      Partial writes and reads
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-lifetime-and-zeroization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key lifetime and zeroization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-not-encrypted" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is not encrypted
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sync/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Sync
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="security">Security</h1>
+<p>This page describes exactly how CryptoDrive protects your files: which
+algorithms and parameters are used, how keys are derived and wrapped, and how
+the virtual filesystem maps the directories and files you see in the mount
+onto the encrypted blobs on disk.</p>
+<h2 id="threat-model">Threat model</h2>
+<p>CryptoDrive is designed to protect the confidentiality and integrity of your
+files <strong>at rest</strong> — on your local disk, on a lost laptop, or when synced to an
+untrusted cloud provider. Specifically:</p>
+<ul>
+<li><strong>Protected:</strong> an attacker who obtains the vault directory (ciphertext 
+  blobs + <code>vault.json</code> + <code>files.json</code>) cannot read your file contents, cannot read
+  your file or directory names, and cannot silently modify a file without
+  detection.</li>
+<li><strong>Not protected:</strong> an attacker with code execution on your machine <em>while a
+  vault is unlocked</em> can read plaintext through the mounted drive like any
+  other local process. Mounted drives are a local-user surface, not a
+  sandboxed one.</li>
+</ul>
+<p>Password strength matters. A weak master password can be brute-forced against
+the stored salt and wrapped DEK; use a long, unique passphrase.</p>
+<h2 id="cryptographic-primitives">Cryptographic primitives</h2>
+<table>
+<thead>
+<tr>
+<th>Purpose</th>
+<th>Algorithm</th>
+<th>Parameters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Password-based key derivation</td>
+<td><strong>PBKDF2-HMAC-SHA256</strong></td>
+<td>256-bit output, 1 000 000 iterations (default), 32-byte random salt</td>
+</tr>
+<tr>
+<td>Data encryption</td>
+<td><strong>AES-256-GCM</strong></td>
+<td>12-byte IV (random per encryption), 128-bit auth tag</td>
+</tr>
+<tr>
+<td>Random number generation</td>
+<td><code>java.security.SecureRandom</code></td>
+<td>OS-seeded CSPRNG</td>
+</tr>
+</tbody>
+</table>
+<p>Every encryption is authenticated — decryption verifies the 128-bit GCM tag
+before returning plaintext. A single flipped bit on disk causes the affected
+block to fail verification instead of silently returning corrupted data.</p>
+<h2 id="key-hierarchy">Key hierarchy</h2>
+<p>CryptoDrive uses a three-level key hierarchy. Only the bottom two levels are
+ever persisted, and both are persisted only in wrapped form.</p>
+<pre><code>master password  ──PBKDF2──►  KEK  ──wraps──►  DEK  ──wraps──►  FEK (per file)
+  (never stored)              (derived          (random,          (random,
+                               on unlock,        wrapped in        wrapped in
+                               never stored)    vault.json)       each .c9e header)
+</code></pre>
+<h3 id="kek-key-encryption-key">KEK — Key Encryption Key</h3>
+<p>Derived on demand from the master password and the vault's stored salt via
+PBKDF2. The KEK exists only in memory and only long enough to unwrap the DEK
+(on unlock) or rewrap it (on password change).</p>
+<h3 id="dek-data-encryption-key">DEK — Data Encryption Key</h3>
+<p>A random 256-bit key generated once when the vault is created. It never
+changes over the lifetime of the vault. The DEK is stored in <code>vault.json</code>
+<em>wrapped with the KEK</em> (AES-GCM), so changing the master password only has to
+rewrap the DEK — all existing file blobs remain valid.</p>
+<p>The DEK is used to:</p>
+<ul>
+<li>Wrap per-file FEKs (stored in each file's header).</li>
+<li>Encrypt file and directory names in <code>files.json</code>.</li>
+</ul>
+<h3 id="fek-file-encryption-key">FEK — File Encryption Key</h3>
+<p>A random 256-bit key generated once per file when the file is created. It is
+stored <em>wrapped with the DEK</em> inside the first 64 bytes of the file's
+ciphertext blob. The FEK encrypts the block payloads of that one file and
+nothing else.</p>
+<p>Per-file FEKs mean:</p>
+<ul>
+<li>Each file's ciphertext is independent — no chosen-plaintext leakage across
+  files.</li>
+<li>Deleting a file is sufficient to render its contents unrecoverable even if
+  the DEK later leaks, provided the wrapped FEK is gone.</li>
+</ul>
+<h2 id="vault-layout-on-disk">Vault layout on disk</h2>
+<p>A vault is a plain directory. Everything in it is either ciphertext or
+encrypted metadata — plaintext never touches the vault folder.</p>
+<pre><code>&lt;vault&gt;/
+├── vault.json        # KDF params, salt, wrapped DEK
+├── files.json        # encrypted virtual tree (names + structure)
+├── 00/
+│   ├── 00/
+│   │   ├── 65.c9e    # inode 101
+│   │   └── 66.c9e    # inode 102
+│   └── 23/
+│       └── 29.c9e    # inode 9001
+└── 0f/
+    └── 65/
+        └── 6a.c9e    # inode 1 009 002
+</code></pre>
+<h3 id="vaultjson"><code>vault.json</code></h3>
+<p>Holds KDF parameters, the salt, and the wrapped DEK. All fields are
+base64-encoded where binary. A snooper who reads this file learns the KDF
+parameters (public by design) but cannot unwrap the DEK without the master
+password.</p>
+<h3 id="filesjson"><code>files.json</code></h3>
+<p>Holds the entire virtual directory tree the user sees inside the mount —
+including all file and directory names. Names are AES-GCM encrypted with the
+DEK and base64-encoded as <code>encryptedNameB64</code>. Directory structure (the
+nesting of <code>dirs</code>/<code>files</code> arrays) leaks some shape information but not names.</p>
+<h3 id="byte2byte1byte0c9e"><code>&lt;byte2&gt;/&lt;byte1&gt;/&lt;byte0&gt;.c9e</code></h3>
+<p>Each file's ciphertext lives at a path derived from its 24-bit file inode.
+The two-level fan-out keeps any one directory under a few hundred entries
+even at millions of files.</p>
+<h2 id="file-and-directory-model">File and directory model</h2>
+<p>The tree the user sees inside the mount is <strong>virtual</strong>. It lives entirely in
+<code>files.json</code>, decrypted into an in-memory representation when the vault is
+unlocked. The ciphertext directory on disk is flat (just the <code>xx/yy/</code> blob
+layout above) and has no relationship to how files are organized in the
+mount.</p>
+<h3 id="inode-ranges">Inode ranges</h3>
+<ul>
+<li><strong>File inodes:</strong> <code>0x000001</code> – <code>0xFFFFFF</code> (1 – 16 777 215). Persisted in
+  <code>files.json</code>. Each file inode maps 1:1 to a <code>.c9e</code> blob.</li>
+<li><strong>Dir inodes:</strong> <code>0x1000000</code> and above. <strong>Not persisted.</strong> Assigned at mount
+  time from a monotonic sequence starting at <code>0x1000000</code> for the root. Dir
+  inodes are ephemeral; they may change between sessions.</li>
+</ul>
+<h3 id="path-resolution">Path resolution</h3>
+<p>Resolving a path like <code>/work/notes/todo.md</code> walks the in-memory tree one
+component at a time. Each step:</p>
+<ol>
+<li>Iterate the current directory's children.</li>
+<li>Decrypt each <code>encryptedNameB64</code> with the DEK and compare to the next
+   plaintext component.</li>
+<li>If the match is a directory, descend. If it's a file, return its inode.</li>
+</ol>
+<p>The plaintext path is never written anywhere, and plaintext names never live
+outside of this transient comparison.</p>
+<h3 id="metadata-vs-blob-operations">Metadata vs. blob operations</h3>
+<p>Operations fall into two cost classes:</p>
+<p><strong>Metadata-only — touches only <code>files.json</code>, no blob I/O</strong></p>
+<ul>
+<li><code>mkdir</code>, <code>rmdir</code></li>
+<li><code>rename</code> / move (of both files and directories)</li>
+<li>directory listing</li>
+<li>path resolution</li>
+</ul>
+<p><strong>Blob I/O — reads or writes a <code>.c9e</code> file</strong></p>
+<ul>
+<li><code>create</code> — allocate a new inode, add a file node, write an empty-but-headered blob</li>
+<li><code>open</code>, <code>read</code>, <code>write</code>, <code>truncate</code></li>
+<li><code>unlink</code> — remove the blob and the file node</li>
+</ul>
+<p>Because rename is metadata-only, moving a file is a rewrite of <code>files.json</code>
+regardless of file size. No plaintext is ever re-encrypted during rename.</p>
+<h3 id="startup-and-lostfound">Startup and <code>lost+found</code></h3>
+<p>On mount, CryptoDrive scans the vault directory for everything matching
+<code>[0-9a-f]{2}/[0-9a-f]{2}/[0-9a-f]{2}.c9e</code>. For each blob it recovers the file
+inode. If a blob's inode is not referenced by any node in the tree from
+<code>files.json</code>, the blob is attached to a virtual <code>lost+found</code> directory at the
+root. This protects against:</p>
+<ul>
+<li>A sync provider delivering a new blob before the updated <code>files.json</code>.</li>
+<li>A crash between writing a blob and writing <code>files.json</code>.</li>
+<li>A human accidentally deleting or corrupting <code>files.json</code>.</li>
+</ul>
+<p>You can always read orphaned files through <code>lost+found</code> without losing data.</p>
+<h2 id="encryption-file-format-c9e">Encryption file format (<code>.c9e</code>)</h2>
+<p>Each on-disk blob is a 64-byte header followed by a sequence of encrypted
+blocks of up to 32 KiB plaintext each. Every block is independent — damage to
+one block does not propagate to others.</p>
+<h3 id="64-byte-header">64-byte header</h3>
+<pre><code>┌──────────┬──────┬──────────────┬──────┐
+│ 4 ver    │ 12   │ 32 enc FEK   │ 16   │
+│ (LE u32) │ IV   │              │ tag  │
+└──────────┴──────┴──────────────┴──────┘
+</code></pre>
+<ul>
+<li><strong>version</strong> (4 B, little-endian u32) — currently <code>1</code>. Reserves room for
+  future format evolutions.</li>
+<li><strong>IV</strong> (12 B) — random, used once for the FEK wrap.</li>
+<li><strong>enc FEK</strong> (32 B) — the per-file key, AES-GCM encrypted with the DEK.</li>
+<li><strong>tag</strong> (16 B) — GCM auth tag over the wrapped FEK.</li>
+</ul>
+<p>Opening a file does an AES-GCM decrypt of this header with the DEK to recover
+the FEK. The FEK is then cached for the lifetime of the open file handle.</p>
+<h3 id="encrypted-block">Encrypted block</h3>
+<p>One block per 32 KiB of plaintext, repeated until EOF:</p>
+<pre><code>┌──────────┬──────┬────────────────────┬──────┐
+│ 4 meta   │ 12   │ up to 32 KiB       │ 16   │
+│ (0x0…0)  │ IV   │ encrypted data     │ tag  │
+└──────────┴──────┴────────────────────┴──────┘
+</code></pre>
+<ul>
+<li><strong>meta</strong> (4 B) — reserved, currently zero.</li>
+<li><strong>IV</strong> (12 B) — fresh random per block. Re-encrypting a block on partial
+  write always picks a new IV, so the same plaintext never produces the same
+  ciphertext.</li>
+<li><strong>data</strong> — AES-GCM ciphertext under the FEK. Full blocks are exactly
+  32 KiB; only the final block may be shorter.</li>
+<li><strong>tag</strong> (16 B) — GCM auth tag.</li>
+</ul>
+<p>A full encrypted block on disk is <strong>32 KiB + 32 B = 32 800 bytes</strong>. The
+per-block overhead is ~0.1% of file size.</p>
+<h3 id="partial-writes-and-reads">Partial writes and reads</h3>
+<p>Reads and writes at the FUSE layer are block-aligned. A partial write pulls
+the containing 32 KiB block into memory, patches the changed bytes, generates
+a fresh IV, re-encrypts the whole block under the FEK, and writes it back.
+This means:</p>
+<ul>
+<li>No plaintext crosses a block boundary.</li>
+<li>The GCM tag is recomputed on every write, so in-place modification cannot
+  desynchronize authentication.</li>
+<li>Bit rot or a truncated sync is contained to the affected block — the rest of
+  the file still decrypts and verifies.</li>
+</ul>
+<h2 id="key-lifetime-and-zeroization">Key lifetime and zeroization</h2>
+<ul>
+<li>The <strong>master password</strong> is held in a <code>char[]</code> for the shortest possible time
+  (dialog → PBKDF2 → zero) and is never copied into a <code>String</code>.</li>
+<li>The <strong>KEK</strong> is derived, used to unwrap the DEK, and discarded within the
+  same method.</li>
+<li>The <strong>DEK</strong> lives in memory only while the vault is unlocked. Locking the
+  vault — manually, at app exit, or via the shutdown hook — zeroizes the DEK
+  buffer and clears the in-memory tree.</li>
+<li>Each <strong>FEK</strong> lives only as long as its corresponding open file handle. When
+  the handle closes, the FEK buffer is zeroized.</li>
+</ul>
+<p>Zeroization uses <code>Arrays.fill(key, (byte) 0)</code> on the backing byte array. JCE
+key material is additionally wrapped in a <code>SecretKey</code> implementation whose
+<code>destroy()</code> clears the buffer.</p>
+<h2 id="what-is-not-encrypted">What is <em>not</em> encrypted</h2>
+<p>For full transparency, these are observable by anyone with access to the vault
+directory:</p>
+<ul>
+<li>The <strong>number of files</strong> (counted via <code>.c9e</code> blobs).</li>
+<li>The <strong>size of each file</strong> (to within one 32 KiB block and a few bytes of
+  overhead).</li>
+<li>The <strong>approximate shape of the directory tree</strong> (from the nesting in
+  <code>files.json</code>, even though names are encrypted).</li>
+<li><strong>Modification timestamps</strong> of <code>.c9e</code> blobs (filesystem metadata, controlled
+  by the OS).</li>
+<li>The <strong>KDF parameters</strong> and <strong>salt</strong> in <code>vault.json</code> (public by design).</li>
+</ul>
+<p>If your threat model requires hiding file counts or sizes, CryptoDrive is not
+the right tool — consider a block-level encrypted container (LUKS, VeraCrypt)
+instead.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      <p>Crypto Drive copyright &copy; 2026. <a href="https://github.com/michaelliao/cryptodrive/releases/latest">Download</a> | <a href="https://github.com/michaelliao/cryptodrive">GitHub</a></p>
+
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "toc.follow", "toc.integrate", "navigation.top"], "search": "../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7c377c4.min.js"></script>
+      
+    
+  </body>
+</html>
