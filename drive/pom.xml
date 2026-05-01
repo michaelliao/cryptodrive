@@ -43,7 +43,7 @@
 		<exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
 		<maven-dependency-plugin.version>3.10.0</maven-dependency-plugin.version>
 		<maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
-		<app.name>CrytpDrive</app.name>
+		<app.name>CryptoDrive</app.name>
 		<jpackage.input>${project.build.directory}/jpackage-input</jpackage.input>
 		<jlink.runtime>${project.build.directory}/jlink-runtime</jlink.runtime>
 		<jlink.modules>
@@ -171,7 +171,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>cryptodrive</finalName>
+		<finalName>CryptoDrive</finalName>
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
@@ -260,7 +260,7 @@
 								<argument>--type</argument>
 								<argument>${jpackage.type}</argument>
 								<argument>--name</argument>
-								<argument>${app.name}-${project.version}</argument>
+								<argument>${app.name}</argument>
 								<argument>--input</argument>
 								<argument>${jpackage.input}</argument>
 								<argument>--main-jar</argument>
