@@ -1,0 +1,742 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../security/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.0">
+    
+    
+      
+        <title>Guide - Crypto Drive</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.45e1311d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#user-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Crypto Drive" class="md-header__button md-logo" aria-label="Crypto Drive" data-md-component="logo">
+      
+  <img src="../assets/images/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Crypto Drive
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+    
+  
+  Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../security/" class="md-tabs__link">
+        
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../sync/" class="md-tabs__link">
+        
+  
+    
+  
+  Sync
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Crypto Drive" class="md-nav__button md-logo" aria-label="Crypto Drive" data-md-component="logo">
+      
+  <img src="../assets/images/logo.png" alt="logo">
+
+    </a>
+    Crypto Drive
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Guide
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Guide
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-new-vault" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a new vault
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#import-an-existing-vault" class="md-nav__link">
+    <span class="md-ellipsis">
+      Import an existing vault
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unlock-and-mount" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unlock and mount
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browse-and-use-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Browse and use files
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-a-vault" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure a vault
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure a vault">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general" class="md-nav__link">
+    <span class="md-ellipsis">
+      General
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sync
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lock-a-vault" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lock a vault
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remove-a-vault-from-the-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remove a vault from the list
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quit-and-restart" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quit and restart
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sync/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Sync
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="user-guide">User Guide</h1>
+<p>This guide walks through the day-to-day tasks of using CryptoDrive: creating a
+new vault, importing an existing one, unlocking and mounting it as a drive,
+browsing files, configuring options, and locking it again.</p>
+<h2 id="overview">Overview</h2>
+<p>CryptoDrive manages one or more <strong>vaults</strong>. A vault is a local folder that
+contains only encrypted data. When you unlock a vault with its master
+password, CryptoDrive mounts it as a regular drive (for example <code>X:\</code> on
+Windows, <code>/Volumes/&lt;Name&gt;</code> on macOS, a mount directory on Linux) and decrypts
+reads and writes transparently as your applications use the drive.</p>
+<p>The main window has two panes:</p>
+<ul>
+<li><strong>Left pane</strong> — the list of vaults CryptoDrive knows about. An icon next to
+  each entry shows whether it is currently locked or unlocked.</li>
+<li><strong>Right pane</strong> — the detail view for whichever vault is selected, with
+  buttons to unlock, lock, reveal the drive in your file manager, or open
+  per-vault settings.</li>
+</ul>
+<p>The toolbar at the top of the left pane has <strong>New Vault</strong>, <strong>Import Vault</strong>,
+and <strong>Remove Vault</strong> actions; the app menu also exposes <strong>Settings</strong> for
+application-wide options.</p>
+<h2 id="create-a-new-vault">Create a new vault</h2>
+<p>Use this when you want to start fresh with a brand-new, empty encrypted
+folder.</p>
+<ol>
+<li>Click <strong>New Vault</strong> in the toolbar.</li>
+<li>In the <strong>Vault Location</strong> field, type or paste a path, or click
+   <strong>Select Folder</strong> and pick an <em>empty</em> directory. This is where the
+   encrypted <code>.c9e</code> blobs and the <code>vault.json</code> / <code>files.json</code> metadata will
+   live. It can be anywhere — including inside a cloud-synced folder such as
+   Dropbox, OneDrive, or Google Drive.</li>
+<li>Enter a <strong>Master Password</strong> (at least 8 characters) and retype it in
+   <strong>Confirm Password</strong>. Choose a long, unique passphrase — anyone who learns
+   this password can decrypt everything in the vault. If you forget it,
+   <strong>there is no recovery</strong>; the contents are irretrievable.</li>
+<li>Click <strong>Create</strong>.</li>
+</ol>
+<p>CryptoDrive writes <code>vault.json</code> into the chosen folder, adds the vault to the
+left pane, and selects it. The vault starts in the <strong>locked</strong> state — you
+still need to unlock it before you can use it.</p>
+<h2 id="import-an-existing-vault">Import an existing vault</h2>
+<p>Use this when you already have a vault folder — for example one created on
+another machine and synced here via Dropbox, or one you unmanaged previously.</p>
+<ol>
+<li>Click <strong>Import Vault</strong> in the toolbar.</li>
+<li>Select the existing vault folder (the one containing <code>vault.json</code>).</li>
+<li>Click <strong>OK</strong>.</li>
+</ol>
+<p>The vault appears in the left pane in its locked state. Importing does not
+require the master password — only unlocking does.</p>
+<h2 id="unlock-and-mount">Unlock and mount</h2>
+<p>Unlocking a vault derives the key from your master password, decrypts the
+stored DEK, and mounts the vault as an OS-visible drive.</p>
+<ol>
+<li>Select the vault in the left pane.</li>
+<li>On the right, click <strong>Unlock Vault</strong>.</li>
+<li>Enter the master password and press <strong>Unlock</strong>.</li>
+</ol>
+<p>On success:</p>
+<ul>
+<li>The lock icon flips to the unlocked state.</li>
+<li>The primary button changes to <strong>Reveal Drive</strong>.</li>
+<li>The secondary button changes to <strong>Lock</strong>.</li>
+<li>CryptoDrive mounts the vault at a drive letter (Windows) or path
+  (macOS/Linux). The first available letter is chosen automatically unless
+  you have pinned one in the vault's settings.</li>
+</ul>
+<p>Click <strong>Reveal Drive</strong> at any time to open the mounted drive in your system
+file manager (Explorer on Windows, Finder on macOS, your default manager on
+Linux). From there, drag, drop, edit, and open files exactly as with any
+other drive — every read and write is encrypted in place.</p>
+<p>If unlocking fails with <em>"Incorrect password"</em>, the password you entered did
+not unwrap the DEK. Retry — there is no lockout, but also no hint.</p>
+<p>If unlocking succeeds but mounting fails, the status message explains why —
+common causes are a drive letter already in use (Windows), a busy mount
+directory (macOS/Linux), or a missing FUSE driver. Install WinFSP on Windows
+or macFUSE on macOS if this is your first run.</p>
+<h2 id="browse-and-use-files">Browse and use files</h2>
+<p>Once mounted, the vault behaves like any other drive:</p>
+<ul>
+<li>File managers, editors, IDEs, media players, and backup tools all work
+  unmodified.</li>
+<li>Files and folders you see through the mount are the <strong>plaintext view</strong>.
+  The vault folder on disk contains only ciphertext blobs named like
+  <code>00/23/29.c9e</code> — do not edit those directly.</li>
+<li>Partial writes are safe: CryptoDrive encrypts in fixed 32 KiB blocks, so
+  appending to a large file only rewrites the affected blocks.</li>
+</ul>
+<p>A hidden <code>lost+found</code> directory at the drive root may appear on mount. It
+contains any encrypted blob that CryptoDrive found on disk but could not
+match to an entry in the virtual tree — for example, because a cloud sync
+delivered a new blob before the updated metadata. Files inside <code>lost+found</code>
+are fully readable; move them somewhere else to keep them.</p>
+<h2 id="configure-a-vault">Configure a vault</h2>
+<p>With the vault selected, click <strong>Config</strong> (shown when the vault is locked) or
+open the vault's settings from the menu. The dialog has three tabs:</p>
+<h3 id="general">General</h3>
+<ul>
+<li><strong>Volume label</strong> — the name shown for the mounted drive in your file
+  manager. Defaults to the vault folder name.</li>
+<li><strong>Auto-lock</strong> — how long to wait after the last activity before
+  automatically locking the vault. Choose a preset (5 / 10 / 15 / 30 / 60 /
+  120 minutes) or <strong>Never</strong>.</li>
+<li><strong>Mount point</strong> —<ul>
+<li>On <strong>Windows</strong>, pick a specific drive letter (<code>D:</code> – <code>Z:</code>) or leave as
+  <em>Auto</em> to use the first available letter.</li>
+<li>On <strong>macOS / Linux</strong>, type or pick a directory to mount at. Leave blank
+  to let the OS choose.</li>
+</ul>
+</li>
+</ul>
+<p>Changes in the General tab are saved as soon as the field loses focus or the
+selection changes — there is no OK/Cancel.</p>
+<h3 id="sync">Sync</h3>
+<p>Reserved for cloud-sync provider configuration (Google Drive / OneDrive via
+OAuth + PKCE, or an S3-compatible bucket). See <a href="../sync/">Sync</a> for the
+current state and setup steps.</p>
+<h3 id="security">Security</h3>
+<p>Change the master password:</p>
+<ol>
+<li>Enter your <strong>current password</strong> in the first field.</li>
+<li>Enter the <strong>new password</strong> in the next two fields.</li>
+<li>Click <strong>Change Password</strong>.</li>
+</ol>
+<p>Because the DEK is only <em>rewrapped</em> — never rotated — all existing files in
+the vault remain readable immediately under the new password. No re-encryption
+of file contents takes place.</p>
+<h2 id="lock-a-vault">Lock a vault</h2>
+<p>Click <strong>Lock</strong> on the detail view of an unlocked vault. CryptoDrive</p>
+<ol>
+<li>unmounts the drive,</li>
+<li>zeroizes the in-memory DEK and FEKs, and</li>
+<li>flips the vault back to the locked state.</li>
+</ol>
+<p>Locking is also triggered automatically when:</p>
+<ul>
+<li>the auto-lock timer elapses (if enabled),</li>
+<li>you quit the application,</li>
+<li>the OS shuts down or signals the process.</li>
+</ul>
+<p>At that point the vault folder on disk is once again nothing but opaque
+ciphertext.</p>
+<h2 id="remove-a-vault-from-the-list">Remove a vault from the list</h2>
+<p><strong>Remove Vault</strong> in the toolbar takes a vault off the left-pane list and out
+of <code>settings.json</code>. It <strong>does not delete the vault folder or any files on
+disk</strong> — you can re-import it later. The vault must be locked to be removed.</p>
+<h2 id="quit-and-restart">Quit and restart</h2>
+<p>CryptoDrive lives in the system tray after you close the main window, keeping
+unlocked vaults mounted. Click the tray icon to reopen the main window, or
+choose <strong>Quit</strong> from its menu to fully exit — which also locks every unlocked
+vault on the way out.</p>
+<p>On next launch CryptoDrive reloads its vault list from <code>settings.json</code> and
+shows every vault in the locked state. You unlock each one as needed.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      <p>Crypto Drive copyright &copy; 2026. <a href="https://github.com/michaelliao/cryptodrive/releases/latest">Download</a> | <a href="https://github.com/michaelliao/cryptodrive">GitHub</a></p>
+
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "toc.follow", "toc.integrate", "navigation.top"], "search": "../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7c377c4.min.js"></script>
+      
+    
+  </body>
+</html>
